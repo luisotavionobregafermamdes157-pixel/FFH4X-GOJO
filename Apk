@@ -1,0 +1,30 @@
+FF_Cheat_Injector/
+├── AndroidManifest.xml
+├── build.gradle
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/ffcheat/
+│   │   │   │   ├── MainActivity.java
+│   │   │   │   ├── InjectorService.java
+│   │   │   │   ├── MemoryReader.java
+│   │   │   │   └── AntiBan.java
+│   │   │   ├── jni/
+│   │   │   │   ├── injector.cpp
+│   │   │   │   ├── cheat.cpp
+│   │   │   │   └── Android.mk
+│   │   │   ├── res/
+│   │   │   │   ├── layout/
+│   │   │   │   │   └── activity_main.xml
+│   │   │   │   └── values/
+│   │   │   │       └── strings.xml
+│   │   │   └── assets/
+│   │   │       └── libffcheat.so
+│   │   └── build.gradle
+├── libs/
+│   ├── arm64-v8a/
+│   │   └── libffcheat.so
+│   └── armeabi-v7a/
+│       └── libffcheat.so
+└── gradle/
+    └── wrapper/
