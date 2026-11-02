@@ -1,0 +1,351 @@
+FF_Cheat_Injector/
+├── AndroidManifest.xml
+├── build.gradle
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/ffcheat/
+│   │   │   │   ├── MainActivity.java
+│   │   │   │   ├── InjectorService.java
+│   │   │   │   ├── MemoryReader.java
+│   │   │   │   └── AntiBan.java
+│   │   │   ├── jni/
+│   │   │   │   ├── injector.cpp
+│   │   │   │   ├── cheat.cpp
+│   │   │   │   └── Android.mk
+│   │   │   ├── res/
+│   │   │   │   ├── layout/
+│   │   │   │   │   └── activity_main.xml
+│   │   │   │   └── values/
+│   │   │   │       └── strings.xml
+│   │   │   └── assets/
+│   │   │       └── libffcheat.so
+│   │   └── build.gradle
+├── libs/
+│   ├── arm64-v8a/
+│   │   └── libffcheat.so
+│   └── armeabi-v7a/
+│       └── libffcheat.so
+└── gradle/
+    └── wrapper/
+    <?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ffcheat"
+    android:versionCode="1"
+    android:versionName="1.0">
+    
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>
+    
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    
+    <application
+        android:label="FF Tool"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.AppCompat"
+        android:allowBackup="true">
+        
+        <activity android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        
+        <service android:name=".InjectorService"
+            android:exported="false"/>
+    </application>
+</manifest>
+package com.ffcheat;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.graphics.Color;
+import android.view.Gravity;
+
+public class MainActivity extends Activity {
+    
+    static {
+        System.loadLibrary("ffcheat");
+    }
+    
+    private native boolean initialize();
+    private native boolean injectCheat(String packageName);
+    private native void stopCheat();
+    private native boolean checkAntiBan();
+    
+    private boolean isRunning = false;
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        // Interface do usuário
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setBackgroundColor(Color.parseColor("#1a1a2e"));
+        
+        // Título
+        TextView title = new TextView(this);
+        title.setText("FF CHEAT INJECTOR");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(24);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, 50, 0, 30);
+        
+        // Botão de injeção
+        Button btnInject = new Button(this);
+        btnInject.setText("INICIAR CHEAT");
+        btnInject.setBackgroundColor(Color.parseColor("#e94560"));
+        btnInject.setTextColor(Color.WHITE);
+        btnInject.setTextSize(18);
+        btnInject.setPadding(50, 20, 50, 20);
+        
+        // Botão de parada
+        Button btnStop = new Button(this);
+        btnStop.setText("PARAR CHEAT");
+        btnStop.setBackgroundColor(Color.parseColor("#16213e"));
+        btnStop.setTextColor(Color.WHITE);
+        btnStop.setTextSize(18);
+        btnStop.setPadding(50, 20, 50, 20);
+        
+        // Status
+        TextView status = new TextView(this);
+        status.setText("Status: Pronto");
+        status.setTextColor(Color.parseColor("#0f3460"));
+        status.setTextSize(16);
+        status.setGravity(Gravity.CENTER);
+        status.setPadding(0, 30, 0, 0);
+        
+        // Ações dos botões
+        btnInject.setOnClickListener(v -> {
+            if (!isRunning) {
+                if (checkRootAccess()) {
+                    if (initialize()) {
+                        if (injectCheat("com.dts.freefireth")) {
+                            isRunning = true;
+                            status.setText("Status: Cheat Ativo");
+                            status.setTextColor(Color.GREEN);
+                            Toast.makeText(this, "Cheat injetado com sucesso!", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(this, "Falha na injeção!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "Requer acesso ROOT!", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        
+        btnStop.setOnClickListener(v -> {
+            if (isRunning) {
+                stopCheat();
+                isRunning = false;
+                status.setText("Status: Parado");
+                status.setTextColor(Color.RED);
+                Toast.makeText(this, "Cheat parado!", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        // Adicionar elementos ao layout
+        layout.addView(title);
+        layout.addView(btnInject);
+        layout.addView(btnStop);
+        layout.addView(status);
+        
+        setContentView(layout);
+    }
+    
+    private boolean checkRootAccess() {
+        try {
+            Process process = Runtime.getRuntime().exec("su");
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+}
+#include <jni.h>
+#include <android/log.h>
+#include <dlfcn.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <elf.h>
+
+#define LOG_TAG "FF_INJECTOR"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+// Estrutura para injeção
+typedef struct {
+    pid_t pid;
+    void* remote_addr;
+    char* lib_path;
+} InjectContext;
+
+// Encontrar processo do jogo
+pid_t findProcess(const char* packageName) {
+    pid_t pid = -1;
+    FILE* fp = fopen("/proc/self/status", "r");
+    
+    // Busca pelo processo
+    char cmdline[256];
+    char path[64];
+    
+    for (int i = 0; i < 1000; i++) {
+        sprintf(path, "/proc/%d/cmdline", i);
+        FILE* cmd = fopen(path, "r");
+        if (cmd) {
+            fgets(cmdline, sizeof(cmdline), cmd);
+            if (strstr(cmdline, packageName)) {
+                pid = i;
+                break;
+            }
+            fclose(cmd);
+        }
+    }
+    
+    return pid;
+}
+
+// Função de injeção via ptrace
+int injectLibrary(pid_t target_pid, const char* library_path) {
+    // 1. Anexar ao processo
+    if (ptrace(PTRACE_ATTACH, target_pid, NULL, NULL) == -1) {
+        LOGE("Falha ao anexar ao processo");
+        return -1;
+    }
+    
+    waitpid(target_pid, NULL, 0);
+    
+    // 2. Obter registradores
+    struct pt_regs regs;
+    if (ptrace(PTRACE_GETREGS, target_pid, NULL, &regs) == -1) {
+        LOGE("Falha ao obter registradores");
+        ptrace(PTRACE_DETACH, target_pid, NULL, NULL);
+        return -1;
+    }
+    
+    // 3. Alocar memória no processo alvo
+    void* remote_addr = (void*)0x70000000;
+    
+    // 4. Escrever o caminho da biblioteca
+    char lib_path[256];
+    strcpy(lib_path, library_path);
+    
+    for (size_t i = 0; i < strlen(lib_path); i++) {
+        ptrace(PTRACE_POKEDATA, target_pid, (void*)((char*)remote_addr + i), lib_path[i]);
+    }
+    
+    // 5. Chamar dlopen no processo alvo
+    // (Implementação complexa - requer shellcode)
+    
+    // 6. Desanexar
+    ptrace(PTRACE_DETACH, target_pid, NULL, NULL);
+    
+    LOGI("Biblioteca injetada com sucesso!");
+    return 0;
+}
+
+// Interface JNI
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_ffcheat_MainActivity_initialize(JNIEnv* env, jobject thiz) {
+    LOGI("Inicializando cheat...");
+    // Inicializar estruturas, hooks, etc.
+    return JNI_TRUE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_ffcheat_MainActivity_injectCheat(JNIEnv* env, jobject thiz, jstring packageName) {
+    const char* pkg = (*env)->GetStringUTFChars(env, packageName, NULL);
+    
+    pid_t target_pid = findProcess(pkg);
+    if (target_pid <= 0) {
+        LOGE("Processo não encontrado: %s", pkg);
+        return JNI_FALSE;
+    }
+    
+    // Caminho da biblioteca
+    const char* lib_path = "/data/data/com.ffcheat/lib/libffcheat.so";
+    
+    if (injectLibrary(target_pid, lib_path) == 0) {
+        return JNI_TRUE;
+    }
+    
+    return JNI_FALSE;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_ffcheat_MainActivity_stopCheat(JNIEnv* env, jobject thiz) {
+    LOGI("Parando cheat...");
+    // Limpar recursos, remover hooks, etc.
+}
+      buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 33
+    buildToolsVersion "33.0.0"
+    
+    defaultConfig {
+        applicationId "com.ffcheat"
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+        
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a"
+        }
+    }
+    
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+} 
+      LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := ffcheat
+LOCAL_SRC_FILES := injector.cpp cheat.cpp
+LOCAL_LDLIBS := -llog -ldl
+include $(BUILD_SHARED_LIBRARY)
+      
