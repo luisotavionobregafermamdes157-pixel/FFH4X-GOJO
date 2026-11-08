@@ -364,7 +364,7 @@ public final class ModuleManager {
         for (LivingEntity entity : client.world.getEntitiesByClass(
                 LivingEntity.class, player.getBoundingBox().expand(64.0),
                 candidate -> candidate.isAlive())) {
-            Vec3d currentPos = entity.getPos();
+            Vec3d currentPos = new Vec3d(entity.getX(), entity.getY(), entity.getZ());
             Box original = ORIGINAL_HITBOXES.get(entity);
             Vec3d previousPos = ORIGINAL_HITBOX_POSITIONS.get(entity);
             if (original == null || previousPos == null) {
