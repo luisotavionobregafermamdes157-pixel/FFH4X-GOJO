@@ -71,7 +71,7 @@ public final class ModuleManager {
         add("Auto Respawn", "Automatically respawns after death.", ModuleCategory.PLAYER, true);
         add("Coordinates", "Displays current XYZ coordinates.", ModuleCategory.PLAYER, true);
         add("Player Info", "Displays player and dimension information.", ModuleCategory.PLAYER, true);
-        add("Inventory Manager", "Inventory organization helpers.", ModuleCategory.PLAYER, false);
+        add("Inventory Manager", "Refills the selected hotbar slot from the main inventory when it becomes empty.", ModuleCategory.PLAYER, true);
         add("Block Info", "Displays targeted block state and position.", ModuleCategory.WORLD, true);
         add("Structure Finder", "Visual structure discovery; no server scanning.", ModuleCategory.WORLD, false);
         add("Entity Viewer", "Displays nearby entity counts.", ModuleCategory.WORLD, true);
@@ -130,6 +130,7 @@ public final class ModuleManager {
         tickNoSlow(player);
         tickStepAssist(player);
         tickAutoTool(client, player);
+        tickInventoryManager(player);
         tickEsp(client, player);
         tickAimbot(client, player);
         tickAutoClick(client);
@@ -198,6 +199,20 @@ public final class ModuleManager {
             }
         }
         player.getInventory().setSelectedSlot(bestSlot);
+    }
+
+    private static void tickInventoryManager(ClientPlayerEntity player) {
+        GojoModule manager = find("Inventory Manager");
+        if (manager == null || !manager.enabled()) return;
+        int selected = player.getInventory().getSelectedSlot();
+        if (!player.getInventory().getStack(selected).isEmpty()) return;
+        for (int slot = 9; slot < 36; slot++) {
+            ItemStack candidate = player.getInventory().getStack(slot);
+            if (candidate.isEmpty()) continue;
+            player.getInventory().setStack(selected, candidate.copy());
+            player.getInventory().setStack(slot, ItemStack.EMPTY);
+            return;
+        }
     }
 
     private static void tickEsp(MinecraftClient client, ClientPlayerEntity player) {
