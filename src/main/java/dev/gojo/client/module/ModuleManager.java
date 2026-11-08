@@ -10,6 +10,8 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -194,7 +196,16 @@ public final class ModuleManager {
         long now = System.nanoTime();
         long interval = 1_000_000_000L / Math.max(1, Math.min(20, autoClick.value()));
         if (nextAutoClickNanos == 0L || now >= nextAutoClickNanos) {
-            client.doAttack();
+            HitResult target = client.crosshairTarget;
+            if (target instanceof EntityHitResult entityHit) {
+                client.interactionManager.attackEntity(client.player, entityHit.getEntity());
+                client.player.swingHand(Hand.MAIN_HAND);
+            } else if (target instanceof BlockHitResult blockHit) {
+                client.interactionManager.attackBlock(blockHit.getBlockPos(), blockHit.getSide());
+                client.player.swingHand(Hand.MAIN_HAND);
+            } else {
+                client.player.swingHand(Hand.MAIN_HAND);
+            }
             nextAutoClickNanos = now + interval;
         }
     }
