@@ -87,6 +87,7 @@ public final class GojoScreen extends Screen {
                     String setting = module.name().equals("Aimbot")
                             ? "FOV " + module.value() + "°"
                             : module.name().equals("Auto Click") ? "CPS " + module.value()
+                            : module.name().equals("Hitbox") ? "SIZE " + module.value() + "/100"
                             : "SPEED " + module.value() + "/100";
                     context.drawText(textRenderer, setting, sx + sliderW + 8, rowY + 38, 0xFFB9B9D0, false);
                 }
@@ -140,7 +141,7 @@ public final class GojoScreen extends Screen {
             int listW = panelW - 178;
             int rowY = panelY + 86 - scroll;
             for (GojoModule module : cachedVisible) {
-                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox")) {
                     int sx = listX + 18;
                     int sliderW = Math.min(125, listW - 110);
                     if (mouseX >= sx && mouseX <= sx + sliderW && mouseY >= rowY + 39 && mouseY <= rowY + 51) {
