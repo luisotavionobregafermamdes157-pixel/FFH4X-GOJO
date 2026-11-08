@@ -51,7 +51,7 @@ public final class ModuleManager {
         add("Hitbox", "Expands nearby player and mob hitboxes (client-side targeting).", ModuleCategory.COMBAT, true);
         add("Auto Click", "Repeats the attack input while the left mouse button is held (1-20 CPS).", ModuleCategory.COMBAT, true);
         add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
-        add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
+        add("Combat Visuals", "Shows a target card with health and distance.", ModuleCategory.COMBAT, true);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
         add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
