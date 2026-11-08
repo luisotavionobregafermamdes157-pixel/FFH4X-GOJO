@@ -65,7 +65,7 @@ public final class ModuleManager {
         add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
         add("Chest ESP", "Shows nearby chests, trapped chests, ender chests and barrels with distance and coordinates.", ModuleCategory.RENDER, true);
         add("Furnace ESP", "Shows nearby furnaces, blast furnaces and smokers with distance and coordinates.", ModuleCategory.RENDER, true);
-        add("Tracers", "Entity direction lines for permitted/private worlds.", ModuleCategory.RENDER, false);
+        add("Tracers", "Draws on-screen direction lines to nearby living entities.", ModuleCategory.RENDER, true);
         add("Nametags", "Enhanced entity labels for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Block Indicator", "Displays the block under the crosshair.", ModuleCategory.RENDER, true);
         add("Lighting", "Client-side lighting presentation controls.", ModuleCategory.RENDER, false);
