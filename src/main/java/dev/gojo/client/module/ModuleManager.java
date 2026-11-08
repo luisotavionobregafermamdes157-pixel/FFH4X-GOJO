@@ -36,6 +36,7 @@ public final class ModuleManager {
     private static boolean registered;
     private static long nextAutoClickNanos;
     private static long nextMobKillAuraNanos;
+    private static long nextPlayerKillAuraNanos;
     private ModuleManager() {}
 
     public static void registerDefaults() {
@@ -221,13 +222,10 @@ public final class ModuleManager {
                                      String moduleName, boolean playersOnly) {
         GojoModule aura = find(moduleName);
         if (aura == null || !aura.enabled() || client.interactionManager == null) return;
-        if (!playersOnly) {
-            long now = System.nanoTime();
-            long interval = 1_000_000_000L / Math.max(1, Math.min(20, aura.value()));
-            if (now < nextMobKillAuraNanos || player.getAttackCooldownProgress(0.5F) < 1.0F) return;
-        } else if (player.getAttackCooldownProgress(0.5F) < 1.0F) {
-            return;
-        }
+        long now = System.nanoTime();
+        long interval = 1_000_000_000L / Math.max(1, Math.min(20, aura.value()));
+        long nextAttack = playersOnly ? nextPlayerKillAuraNanos : nextMobKillAuraNanos;
+        if (now < nextAttack || player.getAttackCooldownProgress(0.5F) < 1.0F) return;
 
         double range = 4.2;
         double minDot = Math.cos(Math.toRadians(55.0));
@@ -250,10 +248,9 @@ public final class ModuleManager {
         if (target != null) {
             client.interactionManager.attackEntity(player, target);
             player.swingHand(Hand.MAIN_HAND);
-            if (!playersOnly) {
-                long interval = 1_000_000_000L / Math.max(1, Math.min(20, aura.value()));
-                nextMobKillAuraNanos = System.nanoTime() + interval;
-            }
+            long next = System.nanoTime() + interval;
+            if (playersOnly) nextPlayerKillAuraNanos = next;
+            else nextMobKillAuraNanos = next;
         }
     }
 
