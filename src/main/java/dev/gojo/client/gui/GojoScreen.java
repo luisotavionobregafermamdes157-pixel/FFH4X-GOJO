@@ -77,7 +77,7 @@ public final class GojoScreen extends Screen {
                 String description = module.description();
                 if (description.length() > 53) description = description.substring(0, 50) + "...";
                 context.drawText(textRenderer, description, listX + 18, rowY + 19, 0xFF85859B, false);
-                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox") || module.name().equals("Mob KillAura")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox") || module.name().equals("Mob KillAura") || module.name().equals("KillAura")) {
                     int sx = listX + 18;
                     int sliderW = Math.min(125, listW - 110);
                     int sy = rowY + 42;
@@ -86,7 +86,7 @@ public final class GojoScreen extends Screen {
                     context.fill(sx, sy, sx + sliderW * module.value() / max, sy + 5, PURPLE);
                     String setting = module.name().equals("Aimbot")
                             ? "FOV " + module.value() + "°"
-                            : (module.name().equals("Auto Click") || module.name().equals("Mob KillAura")) ? "CPS " + module.value()
+                            : (module.name().equals("Auto Click") || module.name().equals("Mob KillAura") || module.name().equals("KillAura")) ? "CPS " + module.value()
                             : module.name().equals("Hitbox") ? "SIZE " + module.value() + "/100"
                             : "SPEED " + module.value() + "/100";
                     context.drawText(textRenderer, setting, sx + sliderW + 8, rowY + 38, 0xFFB9B9D0, false);
@@ -141,7 +141,7 @@ public final class GojoScreen extends Screen {
             int listW = panelW - 178;
             int rowY = panelY + 86 - scroll;
             for (GojoModule module : cachedVisible) {
-                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox") || module.name().equals("Mob KillAura") || module.name().equals("KillAura")) {
                     int sx = listX + 18;
                     int sliderW = Math.min(125, listW - 110);
                     if (mouseX >= sx && mouseX <= sx + sliderW && mouseY >= rowY + 39 && mouseY <= rowY + 51) {
