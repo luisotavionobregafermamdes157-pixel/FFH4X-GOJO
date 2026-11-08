@@ -22,15 +22,26 @@ public final class GojoClient implements ClientModInitializer {
     public void onInitializeClient() {
         ConfigManager.load();
         ModuleManager.registerDefaults();
+
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.gojo-client.open_menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT,
-                KeyBinding.Category.MISC));
+                "key.gojo-client.open_menu",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_RIGHT_SHIFT,
+                KeyBinding.Category.MISC
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openMenu.wasPressed()) {
-                if (client.currentScreen == null) client.setScreen(new GojoScreen());
+                // Toggle the menu even from the title or pause screen.
+                if (client.currentScreen instanceof GojoScreen) {
+                    client.setScreen(null);
+                } else {
+                    client.setScreen(new GojoScreen());
+                }
             }
             ModuleManager.tick(client);
         });
+
         GojoHud.register();
         LOGGER.info("GOJO CLIENT {} initialized", "1.0.0");
     }
