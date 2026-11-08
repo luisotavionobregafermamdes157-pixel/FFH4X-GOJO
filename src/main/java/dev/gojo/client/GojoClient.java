@@ -2,6 +2,7 @@ package dev.gojo.client;
 
 import dev.gojo.client.config.ConfigManager;
 import dev.gojo.client.gui.GojoScreen;
+import dev.gojo.client.gui.LoginScreen;
 import dev.gojo.client.hud.GojoHud;
 import dev.gojo.client.module.ModuleManager;
 import net.fabricmc.api.ClientModInitializer;
@@ -17,6 +18,16 @@ public final class GojoClient implements ClientModInitializer {
     public static final String MOD_ID = "gojo-client";
     public static final Logger LOGGER = LoggerFactory.getLogger("GOJO CLIENT");
     private static KeyBinding openMenu;
+    private static boolean authenticated;
+    private static final String CLIENT_PASSWORD = "gojocraft";
+
+    public static boolean authenticate(String password) {
+        if (CLIENT_PASSWORD.equals(password)) {
+            authenticated = true;
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public void onInitializeClient() {
@@ -31,6 +42,10 @@ public final class GojoClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!authenticated) {
+                if (!(client.currentScreen instanceof LoginScreen)) client.setScreen(new LoginScreen());
+                return;
+            }
             while (openMenu.wasPressed()) {
                 // Toggle the menu even from the title or pause screen.
                 if (client.currentScreen instanceof GojoScreen) {
