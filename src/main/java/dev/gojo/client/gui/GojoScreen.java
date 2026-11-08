@@ -1,6 +1,7 @@
 package dev.gojo.client.gui;
 
 import dev.gojo.client.config.ConfigManager;
+import dev.gojo.client.config.ClientProfileManager;
 import dev.gojo.client.module.GojoModule;
 import dev.gojo.client.module.ModuleCategory;
 import dev.gojo.client.module.ModuleManager;
@@ -48,6 +49,9 @@ public final class GojoScreen extends Screen {
         context.fill(panelX, panelY + 3, panelX + panelW, panelY + 76, PANEL);
         context.drawText(textRenderer, "GOJO", panelX + 18, panelY + 14, 0xFFFFFFFF, true);
         context.drawText(textRenderer, "CLIENT  /  1.21.11", panelX + 68, panelY + 17, 0xFF9A9AAF, false);
+        String playerStats = "PLAYER: " + ClientProfileManager.getPlayerName()
+                + "  |  LOGINS: " + ClientProfileManager.getLoginCount();
+        context.drawText(textRenderer, playerStats, panelX + 18, panelY + 30, 0xFFB9B9D0, false);
         context.drawText(textRenderer, "RIGHT SHIFT  ·  CLOSE", panelX + panelW - 145, panelY + 19, 0xFF77778A, false);
         context.fill(panelX + 14, panelY + 42, panelX + 162, panelY + 65, 0xFF222232);
         context.drawText(textRenderer, "MODULE MANAGER", panelX + 22, panelY + 49, 0xFFB9B9D0, false);
