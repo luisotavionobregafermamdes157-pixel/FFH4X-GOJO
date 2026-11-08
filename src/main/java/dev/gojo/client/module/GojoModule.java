@@ -14,6 +14,7 @@ public final class GojoModule {
         this.category = category;
         this.implemented = implemented;
         if (name.equals("Aimbot")) this.value = 90;
+        if (name.equals("Auto Click")) this.value = 10;
     }
 
     public String name() { return name; }
@@ -22,7 +23,7 @@ public final class GojoModule {
     public boolean implemented() { return implemented; }
     public boolean enabled() { return enabled; }
     public int value() { return value; }
-    public int maxValue() { return name.equals("Aimbot") ? 180 : 100; }
+    public int maxValue() { return name.equals("Aimbot") ? 180 : name.equals("Auto Click") ? 20 : 100; }
     public void setValue(int value) { this.value = Math.max(1, Math.min(maxValue(), value)); }
     public void setEnabled(boolean enabled) { this.enabled = implemented && enabled; }
     public void toggle() { if (implemented) enabled = !enabled; }
