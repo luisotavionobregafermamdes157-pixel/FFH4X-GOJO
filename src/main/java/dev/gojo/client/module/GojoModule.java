@@ -6,6 +6,7 @@ public final class GojoModule {
     private final ModuleCategory category;
     private final boolean implemented;
     private boolean enabled;
+    private int value = 50;
 
     public GojoModule(String name, String description, ModuleCategory category, boolean implemented) {
         this.name = name;
@@ -19,6 +20,8 @@ public final class GojoModule {
     public ModuleCategory category() { return category; }
     public boolean implemented() { return implemented; }
     public boolean enabled() { return enabled; }
+    public int value() { return value; }
+    public void setValue(int value) { this.value = Math.max(1, Math.min(100, value)); }
     public void setEnabled(boolean enabled) { this.enabled = implemented && enabled; }
     public void toggle() { if (implemented) enabled = !enabled; }
 }
