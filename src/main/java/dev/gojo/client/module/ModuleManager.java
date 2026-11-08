@@ -54,7 +54,8 @@ public final class ModuleManager {
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
-        add("NoSlow", "Reduces the local movement slowdown while using items.", ModuleCategory.MOVEMENT, true);
+        add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
+        add("Step Assist", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
         add("Speed", "Adjusts horizontal movement speed (1-100).", ModuleCategory.MOVEMENT, true);
         add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
@@ -127,6 +128,7 @@ public final class ModuleManager {
         tickFullbright(client);
         tickNoFall(player);
         tickNoSlow(player);
+        tickStepAssist(player);
         tickAutoTool(client, player);
         tickEsp(client, player);
         tickAimbot(client, player);
@@ -165,6 +167,14 @@ public final class ModuleManager {
         if (velocity.horizontalLengthSquared() > 0.000001) {
             player.setVelocity(velocity.x * 1.15, velocity.y, velocity.z * 1.15);
         }
+    }
+
+    private static void tickStepAssist(ClientPlayerEntity player) {
+        GojoModule step = find("Step Assist");
+        if (step == null || !step.enabled() || !player.horizontalCollision
+                || !player.isOnGround() || player.isSneaking()
+                || player.getVelocity().horizontalLengthSquared() < 0.0025) return;
+        player.jump();
     }
 
     private static void tickAutoTool(MinecraftClient client, ClientPlayerEntity player) {
