@@ -26,34 +26,18 @@ public final class ClientProfileManager {
 
     private ClientProfileManager() {}
 
-    /**
-     * Loads the local profile for this Minecraft account.
-     * Returns true only when this account has already completed the first login.
-     */
+    /** Loads this Minecraft account profile and records a client launch. */
     public static synchronized boolean initialize(String playerName) {
         activeName = playerName == null || playerName.isBlank() ? "Player" : playerName;
         activeKey = activeName.toLowerCase(Locale.ROOT);
         load();
 
         JsonObject profile = getActiveProfile();
-        boolean alreadyAuthenticated = profile.has("authenticated")
-                && profile.get("authenticated").getAsBoolean();
-        if (alreadyAuthenticated) {
-            profile.addProperty("loginCount", getLoginCount() + 1);
-            profile.addProperty("lastLogin", LocalDateTime.now().format(DATE_FORMAT));
-            profile.addProperty("playerName", activeName);
-            save();
-        }
-        return alreadyAuthenticated;
-    }
-
-    public static synchronized void markAuthenticated() {
-        JsonObject profile = getActiveProfile();
-        profile.addProperty("authenticated", true);
         profile.addProperty("loginCount", getLoginCount() + 1);
         profile.addProperty("lastLogin", LocalDateTime.now().format(DATE_FORMAT));
         profile.addProperty("playerName", activeName);
         save();
+        return true;
     }
 
     public static synchronized int getLoginCount() {
