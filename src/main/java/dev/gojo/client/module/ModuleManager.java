@@ -190,7 +190,8 @@ public final class ModuleManager {
 
     private static void tickAutoTool(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule autoTool = find("Auto Tool");
-        if (autoTool == null || !autoTool.enabled()
+        if (autoTool == null || !autoTool.enabled() || client.currentScreen != null
+                || !client.options.attackKey.isPressed()
                 || !(client.crosshairTarget instanceof BlockHitResult hit)
                 || hit.getType() != HitResult.Type.BLOCK) return;
 
