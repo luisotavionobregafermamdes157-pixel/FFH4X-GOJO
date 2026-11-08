@@ -105,6 +105,7 @@ public final class GojoHud {
             line(context, "TARGET  " + trim(hit.getEntity().getName().getString(), 32), 8, context.getScaledWindowHeight() - 24, 0xFFFFA7E8);
         }
         if (enabled("Combat Visuals")) renderCombatVisuals(context, client);
+        if (enabled("Tracers")) renderTracers(context, client);
         if (enabled("Reach Indicator") && client.crosshairTarget != null && client.crosshairTarget.getType() != HitResult.Type.MISS) {
             double reach = client.player.getEyePos().distanceTo(client.crosshairTarget.getPos());
             line(context, String.format("REACH  %.2f m", reach), 8, context.getScaledWindowHeight() - 38, 0xFF82B9FF);
@@ -126,6 +127,62 @@ public final class GojoHud {
         context.drawText(MinecraftClient.getInstance().textRenderer, name, left + 9, top + 8, 0xFFFFFFFF, true);
         context.drawText(MinecraftClient.getInstance().textRenderer, health, left + 9, top + 25, 0xFFFFA7E8, true);
         context.drawText(MinecraftClient.getInstance().textRenderer, distance, left + 112, top + 25, 0xFF9EDBFF, true);
+    }
+
+
+    private static void renderTracers(DrawContext context, MinecraftClient client) {
+        if (client.player == null || client.world == null) return;
+        var player = client.player;
+        List<net.minecraft.entity.LivingEntity> targets = new ArrayList<>(
+                client.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
+                        player.getBoundingBox().expand(48.0),
+                        entity -> entity != player && entity.isAlive() && !entity.isInvisible()
+                                && player.squaredDistanceTo(entity) <= 2304.0));
+        targets.sort(Comparator.comparingDouble(player::squaredDistanceTo));
+
+        int width = context.getScaledWindowWidth();
+        int height = context.getScaledWindowHeight();
+        int centerX = width / 2;
+        int centerY = height / 2;
+        int maxTargets = Math.min(12, targets.size());
+        for (int i = 0; i < maxTargets; i++) {
+            var target = targets.get(i);
+            var delta = target.getEyePos().subtract(player.getEyePos());
+            double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+            if (horizontal < 0.001) continue;
+            float targetYaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
+            float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
+            float yawDelta = net.minecraft.util.math.MathHelper.wrapDegrees(targetYaw - player.getYaw());
+            float pitchDelta = targetPitch - player.getPitch();
+            if (Math.abs(yawDelta) > 65.0F || Math.abs(pitchDelta) > 45.0F) continue;
+
+            int endX = centerX + Math.round(yawDelta / 65.0F * Math.max(20, width / 2 - 18));
+            int endY = centerY + Math.round(pitchDelta / 45.0F * Math.max(20, height / 2 - 18));
+            int color = target instanceof net.minecraft.entity.player.PlayerEntity
+                    ? 0xFFFF78C8 : 0xFF72B7FF;
+            drawHudLine(context, centerX, centerY, endX, endY, color);
+        }
+    }
+
+    private static void drawHudLine(DrawContext context, int x0, int y0, int x1, int y1, int color) {
+        int dx = Math.abs(x1 - x0);
+        int sx = x0 < x1 ? 1 : -1;
+        int dy = -Math.abs(y1 - y0);
+        int sy = y0 < y1 ? 1 : -1;
+        int error = dx + dy;
+        while (true) {
+            context.fill(x0, y0, x0 + 2, y0 + 2, color);
+            if (x0 == x1 && y0 == y1) break;
+            int twiceError = 2 * error;
+            if (twiceError >= dy) {
+                error += dy;
+                x0 += sx;
+            }
+            if (twiceError <= dx) {
+                error += dx;
+                y0 += sy;
+            }
+        }
     }
 
     private static int renderBlockEntityEsp(DrawContext context, MinecraftClient client, int y, boolean chests) {
