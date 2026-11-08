@@ -30,8 +30,10 @@ public final class GojoHud {
         y = line(context, "GOJO CLIENT", x, y, 0xFF82B9FF);
         if (enabled("FPS")) y = line(context, "FPS  " + client.getCurrentFps(), x, y, 0xFFE8E8F4);
         if (enabled("HUD Coordinates") || enabled("Coordinates")) {
-            var p = client.player.getPos();
-            y = line(context, String.format("XYZ  %.1f  %.1f  %.1f", p.x, p.y, p.z), x, y, 0xFFE8E8F4);
+            double px = client.player.getX();
+            double py = client.player.getY();
+            double pz = client.player.getZ();
+            y = line(context, String.format("XYZ  %.1f  %.1f  %.1f", px, py, pz), x, y, 0xFFE8E8F4);
         }
         if (enabled("HUD Speed") || enabled("Speed")) {
             double speed = client.player.getVelocity().horizontalLength() * 20.0;
