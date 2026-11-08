@@ -54,6 +54,7 @@ public final class ModuleManager {
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
+        add("NoSlow", "Reduces the local movement slowdown while using items.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
         add("Speed", "Adjusts horizontal movement speed (1-100).", ModuleCategory.MOVEMENT, true);
         add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
@@ -125,6 +126,7 @@ public final class ModuleManager {
 
         tickFullbright(client);
         tickNoFall(player);
+        tickNoSlow(player);
         tickAutoTool(client, player);
         tickEsp(client, player);
         tickAimbot(client, player);
@@ -153,6 +155,15 @@ public final class ModuleManager {
         GojoModule noFall = find("NoFall");
         if (noFall != null && noFall.enabled() && player.fallDistance > 2.5F) {
             player.fallDistance = 0.0F;
+        }
+    }
+
+    private static void tickNoSlow(ClientPlayerEntity player) {
+        GojoModule noSlow = find("NoSlow");
+        if (noSlow == null || !noSlow.enabled() || !player.isUsingItem()) return;
+        Vec3d velocity = player.getVelocity();
+        if (velocity.horizontalLengthSquared() > 0.000001) {
+            player.setVelocity(velocity.x * 1.15, velocity.y, velocity.z * 1.15);
         }
     }
 
