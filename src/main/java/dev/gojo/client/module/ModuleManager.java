@@ -3,16 +3,24 @@ package dev.gojo.client.module;
 import dev.gojo.client.config.ConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ModuleManager {
     private static final List<GojoModule> MODULES = new ArrayList<>();
     private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
+    private static final Map<Entity, Boolean> PREVIOUS_GLOW = new HashMap<>();
     private static boolean registered;
     private ModuleManager() {}
 
@@ -22,12 +30,13 @@ public final class ModuleManager {
         add("Reach Indicator", "Displays distance to the crosshair target.", ModuleCategory.COMBAT, true);
         add("Target Indicator", "Shows the entity currently under the crosshair.", ModuleCategory.COMBAT, true);
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
+        add("KillAura", "Automatically attacks visible living targets in a short range.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
-        add("Speed", "Displays horizontal movement speed.", ModuleCategory.MOVEMENT, true);
+        add("Speed", "Adjusts horizontal movement speed (1-100).", ModuleCategory.MOVEMENT, true);
         add("Fullbright", "Client-side brightness override.", ModuleCategory.RENDER, false);
-        add("Entity ESP", "Entity outlines for permitted/private worlds.", ModuleCategory.RENDER, false);
+        add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
         add("Tracers", "Entity direction lines for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Nametags", "Enhanced entity labels for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Block Indicator", "Displays the block under the crosshair.", ModuleCategory.RENDER, true);
@@ -65,13 +74,92 @@ public final class ModuleManager {
 
     public static void tick(MinecraftClient client) {
         ClientPlayerEntity player = client.player;
-        if (player == null || client.world == null) return;
+        if (player == null || client.world == null) {
+            restoreGlow();
+            return;
+        }
+
         GojoModule sprint = find("Auto Sprint");
         if (sprint != null && sprint.enabled() && client.options.forwardKey.isPressed()
                 && !player.isSneaking() && player.getHungerManager().getFoodLevel() > 6) {
             player.setSprinting(true);
         }
+
+        GojoModule speed = find("Speed");
+        if (speed != null && speed.enabled() && player.isOnGround()) {
+            Vec3d velocity = player.getVelocity();
+            Vec3d horizontal = new Vec3d(velocity.x, 0.0, velocity.z);
+            if (horizontal.lengthSquared() > 0.0004) {
+                double targetSpeed = 0.10 + (speed.value() - 1) * 0.0015;
+                Vec3d adjusted = horizontal.normalize().multiply(targetSpeed);
+                player.setVelocity(adjusted.x, velocity.y, adjusted.z);
+            }
+        }
+
         GojoModule respawn = find("Auto Respawn");
         if (respawn != null && respawn.enabled() && player.isDead()) player.requestRespawn();
+
+        tickEsp(client, player);
+        tickKillAura(client, player);
+    }
+
+    private static void tickEsp(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule esp = find("Entity ESP");
+        if (esp == null || !esp.enabled()) {
+            restoreGlow();
+            return;
+        }
+
+        Set<Entity> visibleNow = new HashSet<>();
+        for (Entity entity : client.world.getEntities()) {
+            if (entity == player || !entity.isAlive() || player.squaredDistanceTo(entity) > 4096.0) continue;
+            PREVIOUS_GLOW.putIfAbsent(entity, entity.isGlowing());
+            entity.setGlowing(true);
+            visibleNow.add(entity);
+        }
+
+        Iterator<Map.Entry<Entity, Boolean>> iterator = PREVIOUS_GLOW.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Entity, Boolean> entry = iterator.next();
+            if (!visibleNow.contains(entry.getKey())) {
+                entry.getKey().setGlowing(entry.getValue());
+                iterator.remove();
+            }
+        }
+    }
+
+    private static void restoreGlow() {
+        for (Map.Entry<Entity, Boolean> entry : PREVIOUS_GLOW.entrySet()) {
+            entry.getKey().setGlowing(entry.getValue());
+        }
+        PREVIOUS_GLOW.clear();
+    }
+
+    private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule aura = find("KillAura");
+        if (aura == null || !aura.enabled() || client.interactionManager == null
+                || player.getAttackCooldownProgress(0.5F) < 1.0F) return;
+
+        double range = 4.2;
+        double minDot = Math.cos(Math.toRadians(55.0));
+        Vec3d look = player.getRotationVec(1.0F);
+        LivingEntity target = null;
+        double closest = range * range;
+
+        for (LivingEntity entity : client.world.getEntitiesByClass(
+                LivingEntity.class, player.getBoundingBox().expand(range),
+                candidate -> candidate != player && candidate.isAlive() && !candidate.isTeammate(player))) {
+            double distance = player.squaredDistanceTo(entity);
+            if (distance >= closest || !player.canSee(entity)) continue;
+            Vec3d direction = entity.getEyePos().subtract(player.getEyePos()).normalize();
+            if (look.dotProduct(direction) < minDot) continue;
+            closest = distance;
+            target = entity;
+        }
+
+        if (target != null) {
+            client.interactionManager.attackEntity(player, target);
+            player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+        }
     }
 }
