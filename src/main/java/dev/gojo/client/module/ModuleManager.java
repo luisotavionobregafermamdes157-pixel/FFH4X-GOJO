@@ -13,6 +13,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -31,6 +32,7 @@ public final class ModuleManager {
     private static final List<GojoModule> MODULES = new ArrayList<>();
     private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
     private static final Map<Entity, Boolean> PREVIOUS_GLOW = new HashMap<>();
+    private static final Map<Entity, Box> ORIGINAL_HITBOXES = new HashMap<>();
     private static boolean registered;
     private static long nextAutoClickNanos;
     private ModuleManager() {}
@@ -41,7 +43,9 @@ public final class ModuleManager {
         add("Reach Indicator", "Displays distance to the crosshair target.", ModuleCategory.COMBAT, true);
         add("Target Indicator", "Shows the entity currently under the crosshair.", ModuleCategory.COMBAT, true);
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
-        add("KillAura", "Automatically attacks visible living targets in a short range.", ModuleCategory.COMBAT, true);
+        add("KillAura", "Automatically attacks visible players in a short range.", ModuleCategory.COMBAT, true);
+        add("Mob KillAura", "Automatically attacks visible hostile and passive mobs in range.", ModuleCategory.COMBAT, true);
+        add("Hitbox", "Expands nearby player and mob hitboxes (client-side targeting).", ModuleCategory.COMBAT, true);
         add("Auto Click", "Repeats the attack input while the left mouse button is held (1-20 CPS).", ModuleCategory.COMBAT, true);
         add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
@@ -118,7 +122,9 @@ public final class ModuleManager {
         tickEsp(client, player);
         tickAimbot(client, player);
         tickAutoClick(client);
-        tickKillAura(client, player);
+        tickKillAura(client, player, "KillAura", true);
+        tickKillAura(client, player, "Mob KillAura", false);
+        tickHitboxes(client, player);
         tickScaffold(client, player);
     }
 
@@ -210,8 +216,9 @@ public final class ModuleManager {
         }
     }
 
-    private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player) {
-        GojoModule aura = find("KillAura");
+    private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player,
+                                     String moduleName, boolean playersOnly) {
+        GojoModule aura = find(moduleName);
         if (aura == null || !aura.enabled() || client.interactionManager == null
                 || player.getAttackCooldownProgress(0.5F) < 1.0F) return;
 
@@ -223,7 +230,8 @@ public final class ModuleManager {
 
         for (LivingEntity entity : client.world.getEntitiesByClass(
                 LivingEntity.class, player.getBoundingBox().expand(range),
-                candidate -> candidate != player && candidate.isAlive() && !candidate.isTeammate(player))) {
+                candidate -> candidate != player && candidate.isAlive() && !candidate.isTeammate(player)
+                        && (candidate instanceof PlayerEntity) == playersOnly)) {
             double distance = player.squaredDistanceTo(entity);
             if (distance >= closest || !player.canSee(entity)) continue;
             Vec3d direction = entity.getEyePos().subtract(player.getEyePos()).normalize();
@@ -236,6 +244,40 @@ public final class ModuleManager {
             client.interactionManager.attackEntity(player, target);
             player.swingHand(Hand.MAIN_HAND);
         }
+    }
+
+    private static void tickHitboxes(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule hitbox = find("Hitbox");
+        if (hitbox == null || !hitbox.enabled()) {
+            restoreHitboxes();
+            return;
+        }
+
+        Set<Entity> nearby = new HashSet<>();
+        double expansion = 0.02 + hitbox.value() * 0.012;
+        for (LivingEntity entity : client.world.getEntitiesByClass(
+                LivingEntity.class, player.getBoundingBox().expand(64.0),
+                candidate -> candidate.isAlive())) {
+            Box original = ORIGINAL_HITBOXES.computeIfAbsent(entity, Entity::getBoundingBox);
+            entity.setBoundingBox(original.expand(expansion, expansion * 0.75, expansion));
+            nearby.add(entity);
+        }
+
+        Iterator<Map.Entry<Entity, Box>> iterator = ORIGINAL_HITBOXES.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Entity, Box> entry = iterator.next();
+            if (!nearby.contains(entry.getKey())) {
+                entry.getKey().setBoundingBox(entry.getValue());
+                iterator.remove();
+            }
+        }
+    }
+
+    private static void restoreHitboxes() {
+        for (Map.Entry<Entity, Box> entry : ORIGINAL_HITBOXES.entrySet()) {
+            entry.getKey().setBoundingBox(entry.getValue());
+        }
+        ORIGINAL_HITBOXES.clear();
     }
 
     private static void tickScaffold(MinecraftClient client, ClientPlayerEntity player) {
