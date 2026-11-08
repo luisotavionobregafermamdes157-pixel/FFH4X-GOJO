@@ -23,22 +23,33 @@ public final class ConfigManager {
     private ConfigManager() {}
 
     public static void load() {
+        cached = new JsonObject();
+        cachedSettings = new JsonObject();
         if (!Files.exists(CONFIG)) return;
         try {
             JsonObject root = JsonParser.parseString(Files.readString(CONFIG, StandardCharsets.UTF_8)).getAsJsonObject();
-            cached = root.has("modules") ? root.getAsJsonObject("modules") : new JsonObject();
-            cachedSettings = root.has("settings") ? root.getAsJsonObject("settings") : new JsonObject();
+            if (root.has("modules") && root.get("modules").isJsonObject()) {
+                cached = root.getAsJsonObject("modules");
+            }
+            if (root.has("settings") && root.get("settings").isJsonObject()) {
+                cachedSettings = root.getAsJsonObject("settings");
+            }
         } catch (Exception exception) {
+            cached = new JsonObject();
+            cachedSettings = new JsonObject();
             GojoClient.LOGGER.error("Could not read GOJO CLIENT configuration; defaults will be used", exception);
         }
     }
 
     public static void apply(List<GojoModule> modules) {
         for (GojoModule module : modules) {
-            if (cached.has(module.name()) && cached.get(module.name()).isJsonPrimitive()) {
+            if (module.implemented() && cached.has(module.name())
+                    && cached.get(module.name()).isJsonPrimitive()
+                    && cached.getAsJsonPrimitive(module.name()).isBoolean()) {
                 module.setEnabled(cached.get(module.name()).getAsBoolean());
             }
-            if (cachedSettings.has(module.name()) && cachedSettings.get(module.name()).isJsonPrimitive()) {
+            if (cachedSettings.has(module.name()) && cachedSettings.get(module.name()).isJsonPrimitive()
+                    && cachedSettings.getAsJsonPrimitive(module.name()).isNumber()) {
                 module.setValue(cachedSettings.get(module.name()).getAsInt());
             }
         }
