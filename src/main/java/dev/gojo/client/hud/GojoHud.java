@@ -165,23 +165,12 @@ public final class GojoHud {
     }
 
     private static void drawHudLine(DrawContext context, int x0, int y0, int x1, int y1, int color) {
-        int dx = Math.abs(x1 - x0);
-        int sx = x0 < x1 ? 1 : -1;
-        int dy = -Math.abs(y1 - y0);
-        int sy = y0 < y1 ? 1 : -1;
-        int error = dx + dy;
-        while (true) {
-            context.fill(x0, y0, x0 + 2, y0 + 2, color);
-            if (x0 == x1 && y0 == y1) break;
-            int twiceError = 2 * error;
-            if (twiceError >= dy) {
-                error += dy;
-                x0 += sx;
-            }
-            if (twiceError <= dx) {
-                error += dx;
-                y0 += sy;
-            }
+        int steps = Math.max(1, Math.min(64, Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
+        for (int step = 0; step <= steps; step++) {
+            float progress = step / (float) steps;
+            int x = Math.round(x0 + (x1 - x0) * progress);
+            int y = Math.round(y0 + (y1 - y0) * progress);
+            context.fill(x, y, x + 2, y + 2, color);
         }
     }
 
