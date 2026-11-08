@@ -9,7 +9,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockHitResult;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -47,6 +47,8 @@ public final class ModuleManager {
         add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
         add("Fullbright", "Client-side brightness override.", ModuleCategory.RENDER, false);
         add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
+        add("Chest ESP", "Shows nearby chests, trapped chests, ender chests and barrels with distance and coordinates.", ModuleCategory.RENDER, true);
+        add("Furnace ESP", "Shows nearby furnaces, blast furnaces and smokers with distance and coordinates.", ModuleCategory.RENDER, true);
         add("Tracers", "Entity direction lines for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Nametags", "Enhanced entity labels for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Block Indicator", "Displays the block under the crosshair.", ModuleCategory.RENDER, true);
@@ -215,13 +217,13 @@ public final class ModuleManager {
         BlockPos target = BlockPos.ofFloored(player.getX(), player.getY() - 1.0, player.getZ());
         if (!client.world.getBlockState(target).isAir()) return;
 
-        int selectedSlot = player.getInventory().selectedSlot;
+        int selectedSlot = player.getInventory().getSelectedSlot();
         boolean hasBlock = player.getInventory().getStack(selectedSlot).getItem() instanceof BlockItem;
         if (!hasBlock) {
             for (int slot = 0; slot < 9; slot++) {
                 ItemStack stack = player.getInventory().getStack(slot);
                 if (stack.getItem() instanceof BlockItem) {
-                    player.getInventory().selectedSlot = slot;
+                    player.getInventory().setSelectedSlot(slot);
                     hasBlock = true;
                     break;
                 }
