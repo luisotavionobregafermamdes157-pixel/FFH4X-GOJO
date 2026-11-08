@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "gojo-client",
+  "version": "${version}",
+  "name": "GOJO CLIENT",
+  "description": "Modular client-side utility and visual HUD for Minecraft 1.21.11.",
+  "authors": ["GOJO CLIENT"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.gojo.client.GojoClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
