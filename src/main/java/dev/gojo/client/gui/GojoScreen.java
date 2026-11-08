@@ -19,6 +19,7 @@ public final class GojoScreen extends Screen {
     private static final int PANEL = 0xFF191925;
     private static final int BLUE = 0xFF4B8DFF;
     private static final int PURPLE = 0xFF9A63FF;
+    private static final int ROW_STEP = 50;
     private ModuleCategory selected = ModuleCategory.COMBAT;
     private TextFieldWidget search;
     private int panelX, panelY, panelW, panelH;
@@ -64,15 +65,22 @@ public final class GojoScreen extends Screen {
         int listY = panelY + 78;
         int listW = panelW - 178;
         context.fill(listX, listY, listX + listW, panelY + panelH - 14, 0x99191925);
-        List<GojoModule> visible = cachedVisible;
-        int rowY = listY + 10 - scroll;
-        for (GojoModule module : visible) {
-            if (rowY + 42 > listY && rowY < panelY + panelH - 14) {
-                context.fill(listX + 8, rowY, listX + listW - 8, rowY + 36, 0xFF222230);
+        int rowY = listY + 8 - scroll;
+        for (GojoModule module : cachedVisible) {
+            if (rowY + 46 > listY && rowY < panelY + panelH - 14) {
+                context.fill(listX + 8, rowY, listX + listW - 8, rowY + 44, 0xFF222230);
                 context.drawText(textRenderer, module.name(), listX + 18, rowY + 6, 0xFFE8E8F4, false);
                 String description = module.description();
                 if (description.length() > 53) description = description.substring(0, 50) + "...";
                 context.drawText(textRenderer, description, listX + 18, rowY + 19, 0xFF85859B, false);
+                if (module.name().equals("Speed")) {
+                    int sx = listX + 18;
+                    int sw = Math.min(145, listW - 110);
+                    int sy = rowY + 35;
+                    context.fill(sx, sy, sx + sw, sy + 5, 0xFF414152);
+                    context.fill(sx, sy, sx + sw * module.value() / 100, sy + 5, PURPLE);
+                    context.drawText(textRenderer, "SPEED " + module.value() + "/100", sx + sw + 8, rowY + 32, 0xFFB9B9D0, false);
+                }
                 int bx = listX + listW - 66;
                 int color = module.implemented() ? (module.enabled() ? 0xFF245E83 : 0xFF343444) : 0xFF292932;
                 context.fill(bx, rowY + 8, bx + 48, rowY + 28, color);
@@ -80,9 +88,9 @@ public final class GojoScreen extends Screen {
                 int sw = textRenderer.getWidth(status);
                 context.drawText(textRenderer, status, bx + (48 - sw) / 2, rowY + 14, module.enabled() ? 0xFF9EDBFF : 0xFFAAAAAF, false);
             }
-            rowY += 44;
+            rowY += ROW_STEP;
         }
-        context.drawText(textRenderer, "" + visible.size() + " MODULES", listX + 10, panelY + panelH - 29, 0xFF77778A, false);
+        context.drawText(textRenderer, "" + cachedVisible.size() + " MODULES", listX + 10, panelY + panelH - 29, 0xFF77778A, false);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -104,7 +112,7 @@ public final class GojoScreen extends Screen {
 
     private void clampScroll() {
         int viewport = Math.max(0, panelH - 112);
-        scroll = Math.max(0, Math.min(Math.max(0, cachedVisible.size() * 44 - viewport), scroll));
+        scroll = Math.max(0, Math.min(Math.max(0, cachedVisible.size() * ROW_STEP - viewport), scroll));
     }
 
     @Override public boolean mouseClicked(Click click, boolean doubled) {
@@ -120,14 +128,24 @@ public final class GojoScreen extends Screen {
                 catY += 34;
             }
             int listX = panelX + 164;
-            int rowY = panelY + 88 - scroll;
+            int listW = panelW - 178;
+            int rowY = panelY + 86 - scroll;
             for (GojoModule module : cachedVisible) {
-                if (mouseX >= listX + 8 && mouseX <= panelX + panelW - 14 && mouseY >= rowY && mouseY <= rowY + 36) {
+                if (module.name().equals("Speed")) {
+                    int sx = listX + 18;
+                    int sw = Math.min(145, listW - 110);
+                    if (mouseX >= sx && mouseX <= sx + sw && mouseY >= rowY + 35 && mouseY <= rowY + 44) {
+                        module.setValue((int) Math.round((mouseX - sx) * 100.0 / sw));
+                        ConfigManager.save(ModuleManager.all());
+                        return true;
+                    }
+                }
+                if (mouseX >= listX + 8 && mouseX <= panelX + panelW - 14 && mouseY >= rowY && mouseY <= rowY + 44) {
                     module.toggle();
                     ConfigManager.save(ModuleManager.all());
                     return true;
                 }
-                rowY += 44;
+                rowY += ROW_STEP;
             }
         }
         return super.mouseClicked(click, doubled);
