@@ -19,7 +19,7 @@ public final class GojoScreen extends Screen {
     private static final int PANEL = 0xFF191925;
     private static final int BLUE = 0xFF4B8DFF;
     private static final int PURPLE = 0xFF9A63FF;
-    private static final int ROW_STEP = 50;
+    private static final int ROW_STEP = 58;
     private ModuleCategory selected = ModuleCategory.COMBAT;
     private TextFieldWidget search;
     private int panelX, panelY, panelW, panelH;
@@ -67,19 +67,23 @@ public final class GojoScreen extends Screen {
         context.fill(listX, listY, listX + listW, panelY + panelH - 14, 0x99191925);
         int rowY = listY + 8 - scroll;
         for (GojoModule module : cachedVisible) {
-            if (rowY + 46 > listY && rowY < panelY + panelH - 14) {
-                context.fill(listX + 8, rowY, listX + listW - 8, rowY + 44, 0xFF222230);
+            if (rowY + 54 > listY && rowY < panelY + panelH - 14) {
+                context.fill(listX + 8, rowY, listX + listW - 8, rowY + 52, 0xFF222230);
                 context.drawText(textRenderer, module.name(), listX + 18, rowY + 6, 0xFFE8E8F4, false);
                 String description = module.description();
                 if (description.length() > 53) description = description.substring(0, 50) + "...";
                 context.drawText(textRenderer, description, listX + 18, rowY + 19, 0xFF85859B, false);
-                if (module.name().equals("Speed")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot")) {
                     int sx = listX + 18;
-                    int sw = Math.min(145, listW - 110);
-                    int sy = rowY + 35;
-                    context.fill(sx, sy, sx + sw, sy + 5, 0xFF414152);
-                    context.fill(sx, sy, sx + sw * module.value() / 100, sy + 5, PURPLE);
-                    context.drawText(textRenderer, "SPEED " + module.value() + "/100", sx + sw + 8, rowY + 32, 0xFFB9B9D0, false);
+                    int sliderW = Math.min(125, listW - 110);
+                    int sy = rowY + 42;
+                    int max = module.maxValue();
+                    context.fill(sx, sy, sx + sliderW, sy + 5, 0xFF414152);
+                    context.fill(sx, sy, sx + sliderW * module.value() / max, sy + 5, PURPLE);
+                    String setting = module.name().equals("Aimbot")
+                            ? "FOV " + module.value() + "°"
+                            : "SPEED " + module.value() + "/100";
+                    context.drawText(textRenderer, setting, sx + sliderW + 8, rowY + 38, 0xFFB9B9D0, false);
                 }
                 int bx = listX + listW - 66;
                 int color = module.implemented() ? (module.enabled() ? 0xFF245E83 : 0xFF343444) : 0xFF292932;
@@ -131,16 +135,17 @@ public final class GojoScreen extends Screen {
             int listW = panelW - 178;
             int rowY = panelY + 86 - scroll;
             for (GojoModule module : cachedVisible) {
-                if (module.name().equals("Speed")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot")) {
                     int sx = listX + 18;
-                    int sw = Math.min(145, listW - 110);
-                    if (mouseX >= sx && mouseX <= sx + sw && mouseY >= rowY + 35 && mouseY <= rowY + 44) {
-                        module.setValue((int) Math.round((mouseX - sx) * 100.0 / sw));
+                    int sliderW = Math.min(125, listW - 110);
+                    if (mouseX >= sx && mouseX <= sx + sliderW && mouseY >= rowY + 39 && mouseY <= rowY + 51) {
+                        int next = (int) Math.round((mouseX - sx) * module.maxValue() / sliderW);
+                        module.setValue(next);
                         ConfigManager.save(ModuleManager.all());
                         return true;
                     }
                 }
-                if (mouseX >= listX + 8 && mouseX <= panelX + panelW - 14 && mouseY >= rowY && mouseY <= rowY + 44) {
+                if (mouseX >= listX + 8 && mouseX <= panelX + panelW - 14 && mouseY >= rowY && mouseY <= rowY + 52) {
                     module.toggle();
                     ConfigManager.save(ModuleManager.all());
                     return true;
