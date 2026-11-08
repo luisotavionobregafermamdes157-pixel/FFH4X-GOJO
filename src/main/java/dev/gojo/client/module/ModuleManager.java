@@ -8,6 +8,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -33,6 +34,7 @@ public final class ModuleManager {
     private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
     private static final Map<Entity, Boolean> PREVIOUS_GLOW = new HashMap<>();
     private static final Map<Entity, Box> ORIGINAL_HITBOXES = new HashMap<>();
+    private static final Map<Entity, Vec3d> ORIGINAL_HITBOX_POSITIONS = new HashMap<>();
     private static boolean registered;
     private static long nextAutoClickNanos;
     private static long nextMobKillAuraNanos;
@@ -102,6 +104,8 @@ public final class ModuleManager {
         ClientPlayerEntity player = client.player;
         if (player == null || client.world == null) {
             restoreGlow();
+            restoreHitboxes();
+            restoreFullbright(client);
             return;
         }
 
@@ -130,7 +134,7 @@ public final class ModuleManager {
         tickNoSlow(player);
         tickStepAssist(player);
         tickAutoTool(client, player);
-        tickInventoryManager(player);
+        tickInventoryManager(client, player);
         tickEsp(client, player);
         tickAimbot(client, player);
         tickAutoClick(client);
@@ -148,7 +152,13 @@ public final class ModuleManager {
             if (client.options.getGamma().getValue() < 1.0) {
                 client.options.getGamma().setValue(1.0);
             }
-        } else if (previousGamma >= 0.0) {
+        } else {
+            restoreFullbright(client);
+        }
+    }
+
+    private static void restoreFullbright(MinecraftClient client) {
+        if (previousGamma >= 0.0) {
             client.options.getGamma().setValue(previousGamma);
             previousGamma = -1.0;
         }
@@ -201,17 +211,18 @@ public final class ModuleManager {
         player.getInventory().setSelectedSlot(bestSlot);
     }
 
-    private static void tickInventoryManager(ClientPlayerEntity player) {
+    private static void tickInventoryManager(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule manager = find("Inventory Manager");
-        if (manager == null || !manager.enabled()) return;
+        if (manager == null || !manager.enabled() || client.currentScreen != null
+                || client.interactionManager == null) return;
         int selected = player.getInventory().getSelectedSlot();
         if (!player.getInventory().getStack(selected).isEmpty()) return;
         for (int slot = 9; slot < 36; slot++) {
-            ItemStack candidate = player.getInventory().getStack(slot);
-            if (candidate.isEmpty()) continue;
-            player.getInventory().setStack(selected, candidate.copy());
-            player.getInventory().setStack(slot, ItemStack.EMPTY);
-            return;
+            if (!player.getInventory().getStack(slot).isEmpty()) {
+                client.interactionManager.clickSlot(player.playerScreenHandler.syncId,
+                        slot, selected, SlotActionType.SWAP, player);
+                return;
+            }
         }
     }
 
@@ -249,7 +260,7 @@ public final class ModuleManager {
 
     private static void tickAimbot(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule aim = find("Aimbot");
-        if (aim == null || !aim.enabled()) return;
+        if (aim == null || !aim.enabled() || client.currentScreen != null) return;
 
         double range = 32.0;
         double halfFov = Math.toRadians(aim.value() / 2.0);
@@ -306,7 +317,8 @@ public final class ModuleManager {
     private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player,
                                      String moduleName, boolean playersOnly) {
         GojoModule aura = find(moduleName);
-        if (aura == null || !aura.enabled() || client.interactionManager == null) return;
+        if (aura == null || !aura.enabled() || client.interactionManager == null
+                || client.currentScreen != null) return;
         long now = System.nanoTime();
         long interval = 1_000_000_000L / Math.max(1, Math.min(20, aura.value()));
         long nextAttack = playersOnly ? nextPlayerKillAuraNanos : nextMobKillAuraNanos;
@@ -351,7 +363,16 @@ public final class ModuleManager {
         for (LivingEntity entity : client.world.getEntitiesByClass(
                 LivingEntity.class, player.getBoundingBox().expand(64.0),
                 candidate -> candidate.isAlive())) {
-            Box original = ORIGINAL_HITBOXES.computeIfAbsent(entity, Entity::getBoundingBox);
+            Vec3d currentPos = entity.getPos();
+            Box original = ORIGINAL_HITBOXES.get(entity);
+            Vec3d previousPos = ORIGINAL_HITBOX_POSITIONS.get(entity);
+            if (original == null || previousPos == null) {
+                original = entity.getBoundingBox();
+            } else {
+                original = original.offset(currentPos.subtract(previousPos));
+            }
+            ORIGINAL_HITBOXES.put(entity, original);
+            ORIGINAL_HITBOX_POSITIONS.put(entity, currentPos);
             entity.setBoundingBox(original.expand(expansion, expansion * 0.75, expansion));
             nearby.add(entity);
         }
@@ -361,6 +382,7 @@ public final class ModuleManager {
             Map.Entry<Entity, Box> entry = iterator.next();
             if (!nearby.contains(entry.getKey())) {
                 entry.getKey().setBoundingBox(entry.getValue());
+                ORIGINAL_HITBOX_POSITIONS.remove(entry.getKey());
                 iterator.remove();
             }
         }
@@ -371,12 +393,14 @@ public final class ModuleManager {
             entry.getKey().setBoundingBox(entry.getValue());
         }
         ORIGINAL_HITBOXES.clear();
+        ORIGINAL_HITBOX_POSITIONS.clear();
     }
 
     private static void tickScaffold(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule scaffold = find("Scaffold");
         if (scaffold == null || !scaffold.enabled() || client.interactionManager == null
-                || player.isSneaking() || player.getVelocity().horizontalLengthSquared() < 0.001) return;
+                || client.currentScreen != null || player.isSneaking()
+                || player.getVelocity().horizontalLengthSquared() < 0.001) return;
 
         BlockPos target = BlockPos.ofFloored(player.getX(), player.getY() - 1.0, player.getZ());
         if (!client.world.getBlockState(target).isAir()) return;
