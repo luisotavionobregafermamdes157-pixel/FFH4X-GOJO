@@ -5,6 +5,14 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
@@ -31,10 +39,12 @@ public final class ModuleManager {
         add("Target Indicator", "Shows the entity currently under the crosshair.", ModuleCategory.COMBAT, true);
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
         add("KillAura", "Automatically attacks visible living targets in a short range.", ModuleCategory.COMBAT, true);
+        add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
         add("Speed", "Adjusts horizontal movement speed (1-100).", ModuleCategory.MOVEMENT, true);
+        add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
         add("Fullbright", "Client-side brightness override.", ModuleCategory.RENDER, false);
         add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
         add("Tracers", "Entity direction lines for permitted/private worlds.", ModuleCategory.RENDER, false);
@@ -100,7 +110,9 @@ public final class ModuleManager {
         if (respawn != null && respawn.enabled() && player.isDead()) player.requestRespawn();
 
         tickEsp(client, player);
+        tickAimbot(client, player);
         tickKillAura(client, player);
+        tickScaffold(client, player);
     }
 
     private static void tickEsp(MinecraftClient client, ClientPlayerEntity player) {
@@ -135,6 +147,38 @@ public final class ModuleManager {
         PREVIOUS_GLOW.clear();
     }
 
+    private static void tickAimbot(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule aim = find("Aimbot");
+        if (aim == null || !aim.enabled()) return;
+
+        double range = 32.0;
+        double halfFov = Math.toRadians(aim.value() / 2.0);
+        double minDot = Math.cos(halfFov);
+        Vec3d look = player.getRotationVec(1.0F);
+        PlayerEntity target = null;
+        double closest = range * range;
+
+        for (PlayerEntity candidate : client.world.getPlayers()) {
+            if (candidate == player || !candidate.isAlive() || candidate.isSpectator()
+                    || candidate.isTeammate(player) || !player.canSee(candidate)) continue;
+            double distance = player.squaredDistanceTo(candidate);
+            if (distance >= closest) continue;
+            Vec3d direction = candidate.getEyePos().subtract(player.getEyePos()).normalize();
+            if (look.dotProduct(direction) < minDot) continue;
+            closest = distance;
+            target = candidate;
+        }
+
+        if (target == null) return;
+        Vec3d delta = target.getEyePos().subtract(player.getEyePos());
+        double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+        float targetYaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
+        float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
+        float smooth = 0.35F;
+        player.setYaw(player.getYaw() + MathHelper.wrapDegrees(targetYaw - player.getYaw()) * smooth);
+        player.setPitch(player.getPitch() + (targetPitch - player.getPitch()) * smooth);
+    }
+
     private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule aura = find("KillAura");
         if (aura == null || !aura.enabled() || client.interactionManager == null
@@ -159,7 +203,46 @@ public final class ModuleManager {
 
         if (target != null) {
             client.interactionManager.attackEntity(player, target);
-            player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+            player.swingHand(Hand.MAIN_HAND);
+        }
+    }
+
+    private static void tickScaffold(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule scaffold = find("Scaffold");
+        if (scaffold == null || !scaffold.enabled() || client.interactionManager == null
+                || player.isSneaking() || player.getVelocity().horizontalLengthSquared() < 0.001) return;
+
+        BlockPos target = BlockPos.ofFloored(player.getX(), player.getY() - 1.0, player.getZ());
+        if (!client.world.getBlockState(target).isAir()) return;
+
+        int selectedSlot = player.getInventory().selectedSlot;
+        boolean hasBlock = player.getInventory().getStack(selectedSlot).getItem() instanceof BlockItem;
+        if (!hasBlock) {
+            for (int slot = 0; slot < 9; slot++) {
+                ItemStack stack = player.getInventory().getStack(slot);
+                if (stack.getItem() instanceof BlockItem) {
+                    player.getInventory().selectedSlot = slot;
+                    hasBlock = true;
+                    break;
+                }
+            }
+        }
+        if (!hasBlock) return;
+
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            BlockPos support = target.offset(direction);
+            if (client.world.getBlockState(support).isAir()) continue;
+            Direction face = direction.getOpposite();
+            Vec3d hitPos = Vec3d.ofCenter(support).add(
+                    face.getOffsetX() * 0.5,
+                    face.getOffsetY() * 0.5,
+                    face.getOffsetZ() * 0.5
+            );
+            BlockHitResult hit = new BlockHitResult(hitPos, face, support, false);
+            if (client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit).isAccepted()) {
+                player.swingHand(Hand.MAIN_HAND);
+                return;
+            }
         }
     }
 }
