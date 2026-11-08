@@ -104,10 +104,28 @@ public final class GojoHud {
         if (enabled("Target Indicator") && client.crosshairTarget instanceof EntityHitResult hit) {
             line(context, "TARGET  " + trim(hit.getEntity().getName().getString(), 32), 8, context.getScaledWindowHeight() - 24, 0xFFFFA7E8);
         }
+        if (enabled("Combat Visuals")) renderCombatVisuals(context, client);
         if (enabled("Reach Indicator") && client.crosshairTarget != null && client.crosshairTarget.getType() != HitResult.Type.MISS) {
             double reach = client.player.getEyePos().distanceTo(client.crosshairTarget.getPos());
             line(context, String.format("REACH  %.2f m", reach), 8, context.getScaledWindowHeight() - 38, 0xFF82B9FF);
         }
+    }
+
+    private static void renderCombatVisuals(DrawContext context, MinecraftClient client) {
+        if (!(client.crosshairTarget instanceof EntityHitResult hit)) return;
+        var target = hit.getEntity();
+        String name = trim(target.getName().getString(), 28);
+        String health = target instanceof net.minecraft.entity.LivingEntity living
+                ? String.format("%.1f HP", living.getHealth()) : "ENTITY";
+        String distance = String.format("%.1f m", client.player.distanceTo(target));
+        int centerX = context.getScaledWindowWidth() / 2;
+        int top = context.getScaledWindowHeight() - 68;
+        int left = centerX - 82;
+        context.fill(left, top, left + 164, top + 48, 0xDD10101B);
+        context.fill(left, top, left + 164, top + 2, 0xFF9A63FF);
+        context.drawText(MinecraftClient.getInstance().textRenderer, name, left + 9, top + 8, 0xFFFFFFFF, true);
+        context.drawText(MinecraftClient.getInstance().textRenderer, health, left + 9, top + 25, 0xFFFFA7E8, true);
+        context.drawText(MinecraftClient.getInstance().textRenderer, distance, left + 112, top + 25, 0xFF9EDBFF, true);
     }
 
     private static int renderBlockEntityEsp(DrawContext context, MinecraftClient client, int y, boolean chests) {
