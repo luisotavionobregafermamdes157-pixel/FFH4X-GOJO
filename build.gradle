@@ -34,5 +34,5 @@ java {
 }
 
 jar {
-    from('LICENSE') { rename { "${it}_${project.base.archives_name.get()}" } }
+    from('LICENSE') { rename { "${it}_${project.archives_base_name}" } }
 }
