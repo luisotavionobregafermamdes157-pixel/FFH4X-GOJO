@@ -29,8 +29,8 @@ public final class GojoScreen extends Screen {
     public GojoScreen() { super(Text.literal("GOJO CLIENT")); }
 
     @Override protected void init() {
-        panelW = Math.min(650, width - 24);
-        panelH = Math.min(390, height - 24);
+        panelW = Math.max(320, Math.min(650, width - 16));
+        panelH = Math.max(240, Math.min(390, height - 16));
         panelX = (width - panelW) / 2;
         panelY = (height - panelH) / 2;
         search = new TextFieldWidget(textRenderer, panelX + 178, panelY + 43, panelW - 200, 20, Text.literal("Search modules"));
