@@ -12,6 +12,7 @@ import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class GojoScreen extends Screen {
     private static final int BG = 0xF0101018;
@@ -22,6 +23,8 @@ public final class GojoScreen extends Screen {
     private TextFieldWidget search;
     private int panelX, panelY, panelW, panelH;
     private int scroll;
+    private String cachedQuery = null;
+    private List<GojoModule> cachedVisible = List.of();
 
     public GojoScreen() { super(Text.literal("GOJO CLIENT")); }
 
@@ -32,11 +35,13 @@ public final class GojoScreen extends Screen {
         panelY = (height - panelH) / 2;
         search = new TextFieldWidget(textRenderer, panelX + 178, panelY + 43, panelW - 200, 20, Text.literal("Search modules"));
         search.setPlaceholder(Text.literal("Search modules..."));
+        search.setChangedListener(value -> refreshFiltered());
         addDrawableChild(search);
+        refreshFiltered();
     }
 
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, width, height, 0x99000000);
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, BG);
         context.fill(panelX, panelY, panelX + panelW, panelY + 3, BLUE);
         context.fill(panelX, panelY + 3, panelX + panelW, panelY + 76, PANEL);
@@ -59,7 +64,7 @@ public final class GojoScreen extends Screen {
         int listY = panelY + 78;
         int listW = panelW - 178;
         context.fill(listX, listY, listX + listW, panelY + panelH - 14, 0x99191925);
-        List<GojoModule> visible = filtered();
+        List<GojoModule> visible = cachedVisible;
         int rowY = listY + 10 - scroll;
         for (GojoModule module : visible) {
             if (rowY + 42 > listY && rowY < panelY + panelH - 14) {
@@ -81,14 +86,25 @@ public final class GojoScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    private List<GojoModule> filtered() {
-        String query = search == null ? "" : search.getText().toLowerCase();
+    private void refreshFiltered() {
+        String query = search == null ? "" : search.getText().toLowerCase(Locale.ROOT);
+        if (query.equals(cachedQuery)) return;
+        cachedQuery = query;
         List<GojoModule> result = new ArrayList<>();
         for (GojoModule module : ModuleManager.all()) {
-            if (module.category() == selected && (query.isBlank() || module.name().toLowerCase().contains(query)
-                    || module.description().toLowerCase().contains(query))) result.add(module);
+            if (module.category() == selected && (query.isBlank()
+                    || module.name().toLowerCase(Locale.ROOT).contains(query)
+                    || module.description().toLowerCase(Locale.ROOT).contains(query))) {
+                result.add(module);
+            }
         }
-        return result;
+        cachedVisible = List.copyOf(result);
+        clampScroll();
+    }
+
+    private void clampScroll() {
+        int viewport = Math.max(0, panelH - 112);
+        scroll = Math.max(0, Math.min(Math.max(0, cachedVisible.size() * 44 - viewport), scroll));
     }
 
     @Override public boolean mouseClicked(Click click, boolean doubled) {
@@ -99,13 +115,13 @@ public final class GojoScreen extends Screen {
             int catY = panelY + 94;
             for (ModuleCategory category : ModuleCategory.values()) {
                 if (mouseX >= panelX + 15 && mouseX <= panelX + 146 && mouseY >= catY - 7 && mouseY <= catY + 19) {
-                    selected = category; scroll = 0; return true;
+                    selected = category; scroll = 0; cachedQuery = null; refreshFiltered(); return true;
                 }
                 catY += 34;
             }
             int listX = panelX + 164;
             int rowY = panelY + 88 - scroll;
-            for (GojoModule module : filtered()) {
+            for (GojoModule module : cachedVisible) {
                 if (mouseX >= listX + 8 && mouseX <= panelX + panelW - 14 && mouseY >= rowY && mouseY <= rowY + 36) {
                     module.toggle();
                     ConfigManager.save(ModuleManager.all());
@@ -118,7 +134,8 @@ public final class GojoScreen extends Screen {
     }
 
     @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        scroll = Math.max(0, Math.min(500, scroll - (int) (verticalAmount * 22)));
+        scroll -= (int) (verticalAmount * 22);
+        clampScroll();
         return true;
     }
 
