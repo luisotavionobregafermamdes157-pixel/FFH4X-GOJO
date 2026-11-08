@@ -30,6 +30,7 @@ public final class ModuleManager {
     private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
     private static final Map<Entity, Boolean> PREVIOUS_GLOW = new HashMap<>();
     private static boolean registered;
+    private static long nextAutoClickNanos;
     private ModuleManager() {}
 
     public static void registerDefaults() {
@@ -39,6 +40,7 @@ public final class ModuleManager {
         add("Target Indicator", "Shows the entity currently under the crosshair.", ModuleCategory.COMBAT, true);
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
         add("KillAura", "Automatically attacks visible living targets in a short range.", ModuleCategory.COMBAT, true);
+        add("Auto Click", "Repeats the attack input while the left mouse button is held (1-20 CPS).", ModuleCategory.COMBAT, true);
         add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Visual combat overlays; no attack automation.", ModuleCategory.COMBAT, false);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
@@ -113,6 +115,7 @@ public final class ModuleManager {
 
         tickEsp(client, player);
         tickAimbot(client, player);
+        tickAutoClick(client);
         tickKillAura(client, player);
         tickScaffold(client, player);
     }
@@ -179,6 +182,21 @@ public final class ModuleManager {
         float smooth = 0.35F;
         player.setYaw(player.getYaw() + MathHelper.wrapDegrees(targetYaw - player.getYaw()) * smooth);
         player.setPitch(player.getPitch() + (targetPitch - player.getPitch()) * smooth);
+    }
+
+    private static void tickAutoClick(MinecraftClient client) {
+        GojoModule autoClick = find("Auto Click");
+        if (autoClick == null || !autoClick.enabled() || client.currentScreen != null
+                || client.interactionManager == null || !client.options.attackKey.isPressed()) {
+            nextAutoClickNanos = 0L;
+            return;
+        }
+        long now = System.nanoTime();
+        long interval = 1_000_000_000L / Math.max(1, Math.min(20, autoClick.value()));
+        if (nextAutoClickNanos == 0L || now >= nextAutoClickNanos) {
+            client.doAttack();
+            nextAutoClickNanos = now + interval;
+        }
     }
 
     private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player) {
