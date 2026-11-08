@@ -3,6 +3,8 @@ package dev.gojo.client.hud;
 import dev.gojo.client.module.GojoModule;
 import dev.gojo.client.module.ModuleManager;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
@@ -13,6 +15,9 @@ import net.minecraft.util.math.BlockPos;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public final class GojoHud {
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -56,6 +61,8 @@ public final class GojoHud {
             String server = client.getCurrentServerEntry() == null ? "Singleplayer" : client.getCurrentServerEntry().address;
             y = line(context, "SERVER  " + trim(server, 36), x, y, 0xFFB4B4C8);
         }
+        if (enabled("Chest ESP")) y = renderBlockEntityEsp(context, client, y, true);
+        if (enabled("Furnace ESP")) y = renderBlockEntityEsp(context, client, y, false);
         if (enabled("Block Info") && client.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = hit.getBlockPos();
             line(context, "BLOCK  " + trim(client.world.getBlockState(pos).getBlock().getName().getString(), 28)
@@ -68,6 +75,34 @@ public final class GojoHud {
             double reach = client.player.getEyePos().distanceTo(client.crosshairTarget.getPos());
             line(context, String.format("REACH  %.2f m", reach), 8, context.getScaledWindowHeight() - 38, 0xFF82B9FF);
         }
+    }
+
+    private static int renderBlockEntityEsp(DrawContext context, MinecraftClient client, int y, boolean chests) {
+        List<BlockEntity> found = new ArrayList<>();
+        for (BlockEntity entity : client.world.getBlockEntities()) {
+            BlockPos pos = entity.getPos();
+            double distance = Math.sqrt(client.player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
+            if (distance > 64.0) continue;
+            var block = entity.getCachedState().getBlock();
+            boolean match = chests
+                    ? block == Blocks.CHEST || block == Blocks.TRAPPED_CHEST || block == Blocks.ENDER_CHEST || block == Blocks.BARREL
+                    : block == Blocks.FURNACE || block == Blocks.BLAST_FURNACE || block == Blocks.SMOKER;
+            if (match) found.add(entity);
+        }
+        found.sort(Comparator.comparingDouble(entity -> client.player.squaredDistanceTo(
+                entity.getPos().getX() + 0.5, entity.getPos().getY() + 0.5, entity.getPos().getZ() + 0.5)));
+        String title = chests ? "CHEST ESP" : "FURNACE ESP";
+        int color = chests ? 0xFFFFC66D : 0xFFFF8A65;
+        y = line(context, title + "  " + found.size(), 8, y, color);
+        int shown = Math.min(5, found.size());
+        for (int i = 0; i < shown; i++) {
+            BlockPos pos = found.get(i).getPos();
+            double distance = Math.sqrt(client.player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
+            y = line(context, String.format("%s  %d %d %d  %.0fm",
+                    chests ? "CHEST" : "FURNACE", pos.getX(), pos.getY(), pos.getZ(), distance),
+                    8, y, 0xFFE8E8F4);
+        }
+        return y;
     }
 
     private static boolean enabled(String name) {
