@@ -15,6 +15,7 @@ public final class GojoModule {
         this.implemented = implemented;
         if (name.equals("Aimbot")) this.value = 90;
         if (name.equals("Auto Click")) this.value = 10;
+        if (name.equals("Hitbox")) this.value = 10;
     }
 
     public String name() { return name; }
