@@ -7,9 +7,12 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class ModuleManager {
     private static final List<GojoModule> MODULES = new ArrayList<>();
+    private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
     private static boolean registered;
     private ModuleManager() {}
 
@@ -54,10 +57,11 @@ public final class ModuleManager {
             module.setEnabled(true);
         }
         MODULES.add(module);
+        BY_NAME.put(name, module);
     }
 
     public static List<GojoModule> all() { return Collections.unmodifiableList(MODULES); }
-    public static GojoModule find(String name) { return MODULES.stream().filter(m -> m.name().equals(name)).findFirst().orElse(null); }
+    public static GojoModule find(String name) { return BY_NAME.get(name); }
 
     public static void tick(MinecraftClient client) {
         ClientPlayerEntity player = client.player;
