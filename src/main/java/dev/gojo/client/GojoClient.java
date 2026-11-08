@@ -1,6 +1,7 @@
 package dev.gojo.client;
 
 import dev.gojo.client.config.ConfigManager;
+import dev.gojo.client.config.ClientProfileManager;
 import dev.gojo.client.gui.GojoScreen;
 import dev.gojo.client.gui.LoginScreen;
 import dev.gojo.client.hud.GojoHud;
@@ -8,6 +9,7 @@ import dev.gojo.client.module.ModuleManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
@@ -24,6 +26,7 @@ public final class GojoClient implements ClientModInitializer {
     public static boolean authenticate(String password) {
         if (CLIENT_PASSWORD.equals(password)) {
             authenticated = true;
+            ClientProfileManager.markAuthenticated();
             return true;
         }
         return false;
@@ -32,6 +35,7 @@ public final class GojoClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ConfigManager.load();
+        authenticated = ClientProfileManager.initialize(MinecraftClient.getInstance().getSession().getUsername());
         ModuleManager.registerDefaults();
 
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
