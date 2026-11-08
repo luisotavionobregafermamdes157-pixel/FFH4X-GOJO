@@ -57,6 +57,39 @@ public final class GojoHud {
                 y = line(context, "DURABILITY  " + remaining + "/" + stack.getMaxDamage(), x, y, 0xFFFFD18B);
             }
         }
+        if (enabled("Player Info")) {
+            y = line(context, "PLAYER  " + client.player.getName().getString()
+                    + "  HP " + String.format("%.1f", client.player.getHealth())
+                    + "  FOOD " + client.player.getHungerManager().getFoodLevel(),
+                    x, y, 0xFF9EDBFF);
+        }
+        if (enabled("Environment Info")) {
+            String biome = client.world.getBiome(client.player.getBlockPos()).getKey()
+                    .map(key -> key.getValue().toString()).orElse("unknown");
+            y = line(context, "BIOME  " + trim(biome, 34)
+                    + "  DIM " + client.world.getRegistryKey().getValue(), x, y, 0xFF9EDBFF);
+        }
+        if (enabled("Entity Viewer")) {
+            int players = 0;
+            int mobs = 0;
+            for (var entity : client.world.getEntities()) {
+                if (entity == client.player || !entity.isAlive()) continue;
+                if (entity instanceof net.minecraft.entity.player.PlayerEntity) players++;
+                else if (entity instanceof net.minecraft.entity.LivingEntity) mobs++;
+            }
+            y = line(context, "ENTITIES  PLAYERS " + players + "  MOBS " + mobs, x, y, 0xFFB9A0FF);
+        }
+        if (enabled("Combat Info")) {
+            String target = client.crosshairTarget instanceof EntityHitResult hit
+                    ? trim(hit.getEntity().getName().getString(), 22) : "none";
+            y = line(context, "COMBAT  TARGET " + target + "  HP " + String.format("%.1f", client.player.getHealth()),
+                    x, y, 0xFFFFA7E8);
+        }
+        if (enabled("Block Indicator") && client.crosshairTarget instanceof BlockHitResult blockHit
+                && blockHit.getType() == HitResult.Type.BLOCK) {
+            String block = client.world.getBlockState(blockHit.getBlockPos()).getBlock().getName().getString();
+            y = line(context, "LOOKING AT  " + trim(block, 30), x, y, 0xFFFFD18B);
+        }
         if (enabled("Server Info")) {
             String server = client.getCurrentServerEntry() == null ? "Singleplayer" : client.getCurrentServerEntry().address;
             y = line(context, "SERVER  " + trim(server, 36), x, y, 0xFFB4B4C8);
