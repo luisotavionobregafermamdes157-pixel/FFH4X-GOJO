@@ -4,6 +4,7 @@ import dev.gojo.client.config.ConfigManager;
 import dev.gojo.client.module.GojoModule;
 import dev.gojo.client.module.ModuleCategory;
 import dev.gojo.client.module.ModuleManager;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -90,7 +91,10 @@ public final class GojoScreen extends Screen {
         return result;
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
         if (button == 0) {
             int catY = panelY + 94;
             for (ModuleCategory category : ModuleCategory.values()) {
@@ -110,7 +114,7 @@ public final class GojoScreen extends Screen {
                 rowY += 44;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
