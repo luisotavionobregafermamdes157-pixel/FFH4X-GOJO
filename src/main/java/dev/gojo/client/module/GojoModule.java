@@ -13,6 +13,7 @@ public final class GojoModule {
         this.description = description;
         this.category = category;
         this.implemented = implemented;
+        if (name.equals("Aimbot")) this.value = 90;
     }
 
     public String name() { return name; }
