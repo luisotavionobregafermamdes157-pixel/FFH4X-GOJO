@@ -77,7 +77,7 @@ public final class GojoScreen extends Screen {
                 String description = module.description();
                 if (description.length() > 53) description = description.substring(0, 50) + "...";
                 context.drawText(textRenderer, description, listX + 18, rowY + 19, 0xFF85859B, false);
-                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click")) {
+                if (module.name().equals("Speed") || module.name().equals("Aimbot") || module.name().equals("Auto Click") || module.name().equals("Hitbox")) {
                     int sx = listX + 18;
                     int sliderW = Math.min(125, listW - 110);
                     int sy = rowY + 42;
