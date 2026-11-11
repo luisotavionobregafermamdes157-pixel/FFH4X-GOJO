@@ -5,6 +5,7 @@ import dev.gojo.client.config.ClientProfileManager;
 import dev.gojo.client.gui.GojoScreen;
 import dev.gojo.client.hud.GojoHud;
 import dev.gojo.client.module.ModuleManager;
+import dev.gojo.client.render.WorldOverlayRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -45,6 +46,7 @@ public final class GojoClient implements ClientModInitializer {
         });
 
         GojoHud.register();
+        WorldOverlayRenderer.register();
         LOGGER.info("GOJO CLIENT {} initialized", "1.0.0");
     }
 }
