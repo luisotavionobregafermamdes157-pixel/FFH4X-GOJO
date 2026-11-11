@@ -3,6 +3,7 @@ package dev.gojo.client.module;
 import dev.gojo.client.config.ConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -40,6 +41,8 @@ public final class ModuleManager {
     private static long nextMobKillAuraNanos;
     private static long nextPlayerKillAuraNanos;
     private static double previousGamma = -1.0;
+    private static int autoEatOriginalSlot = -1;
+    private static boolean autoEatStarted;
     private ModuleManager() {}
 
     public static void registerDefaults() {
@@ -55,6 +58,7 @@ public final class ModuleManager {
         add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Shows a target card with health and distance.", ModuleCategory.COMBAT, true);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
+        add("Auto Eat", "Uses food from your hotbar when hunger is low.", ModuleCategory.PLAYER, true);
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
         add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
         add("Step Assist", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
@@ -134,6 +138,7 @@ public final class ModuleManager {
         tickNoSlow(player);
         tickStepAssist(player);
         tickAutoTool(client, player);
+        tickAutoEat(client, player);
         tickInventoryManager(client, player);
         tickEsp(client, player);
         tickAimbot(client, player);
@@ -210,6 +215,39 @@ public final class ModuleManager {
             }
         }
         player.getInventory().setSelectedSlot(bestSlot);
+    }
+
+    private static void tickAutoEat(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule autoEat = find("Auto Eat");
+        if (autoEat == null || !autoEat.enabled() || client.currentScreen != null
+                || client.interactionManager == null) {
+            if (autoEatOriginalSlot >= 0 && !player.isUsingItem()) {
+                player.getInventory().setSelectedSlot(autoEatOriginalSlot);
+                autoEatOriginalSlot = -1;
+                autoEatStarted = false;
+            }
+            return;
+        }
+
+        if (autoEatStarted) {
+            if (!player.isUsingItem()) {
+                player.getInventory().setSelectedSlot(autoEatOriginalSlot);
+                autoEatOriginalSlot = -1;
+                autoEatStarted = false;
+            }
+            return;
+        }
+        if (player.getHungerManager().getFoodLevel() > 14 || player.isUsingItem()) return;
+
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = player.getInventory().getStack(slot);
+            if (stack.isEmpty() || stack.get(DataComponentTypes.FOOD) == null) continue;
+            autoEatOriginalSlot = player.getInventory().getSelectedSlot();
+            player.getInventory().setSelectedSlot(slot);
+            client.interactionManager.interactItem(player, Hand.MAIN_HAND);
+            autoEatStarted = true;
+            return;
+        }
     }
 
     private static void tickInventoryManager(MinecraftClient client, ClientPlayerEntity player) {
