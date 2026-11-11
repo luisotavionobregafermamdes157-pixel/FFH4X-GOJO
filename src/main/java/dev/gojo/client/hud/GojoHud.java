@@ -49,6 +49,13 @@ public final class GojoHud {
                     : client.getNetworkHandler().getPlayerListEntry(client.player.getUuid());
             y = line(context, "PING  " + (entry == null ? "--" : entry.getLatency() + " ms"), x, y, 0xFFE8E8F4);
         }
+        if (enabled("Connection Monitor")) {
+            PlayerListEntry entry = client.getNetworkHandler() == null ? null
+                    : client.getNetworkHandler().getPlayerListEntry(client.player.getUuid());
+            String connection = client.getCurrentServerEntry() == null ? "LOCAL" : "MULTIPLAYER";
+            String latency = entry == null ? "--" : entry.getLatency() + " ms";
+            y = line(context, "CONNECTION  " + connection + "  PING " + latency, x, y, 0xFF9EDBFF);
+        }
         if (enabled("Clock")) y = line(context, "TIME  " + LocalTime.now().format(CLOCK), x, y, 0xFFE8E8F4);
         if (enabled("Durability")) {
             var stack = client.player.getMainHandStack();
