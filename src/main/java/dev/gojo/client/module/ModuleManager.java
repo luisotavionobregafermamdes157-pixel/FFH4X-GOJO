@@ -42,6 +42,8 @@ public final class ModuleManager {
     private static double previousGamma = -1.0;
     private static int autoEatOriginalSlot = -1;
     private static boolean autoEatStarted;
+    private static boolean flyWasActive;
+    private static boolean flyOriginalNoGravity;
     private ModuleManager() {}
 
     public static void registerDefaults() {
@@ -62,7 +64,8 @@ public final class ModuleManager {
         add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
         add("Step Assist", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
-        add("Speed", "Adjusts horizontal movement speed (1-100).", ModuleCategory.MOVEMENT, true);
+        add("Speed", "Ajusta a velocidade horizontal (1-100).", ModuleCategory.MOVEMENT, true);
+        add("Fly", "Permite voar com controle de altura e movimento.", ModuleCategory.MOVEMENT, true);
         add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
         add("Fullbright", "Sets client gamma to maximum brightness.", ModuleCategory.RENDER, true);
         add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
@@ -141,6 +144,7 @@ public final class ModuleManager {
 
         tickFullbright(client);
         tickNoFall(player);
+        tickFly(client, player);
         tickNoSlow(player);
         tickStepAssist(player);
         tickAutoTool(client, player);
@@ -162,7 +166,7 @@ public final class ModuleManager {
 
         String[] restrictedModules = {
                 "KillAura", "Mob KillAura", "Hitbox", "Aimbot", "Auto Click",
-                "Speed", "NoFall", "NoSlow", "Step Assist", "Scaffold"
+                "Speed", "Fly", "NoFall", "NoSlow", "Step Assist", "Scaffold"
         };
         boolean changed = false;
         for (String name : restrictedModules) {
@@ -199,6 +203,40 @@ public final class ModuleManager {
             client.options.getGamma().setValue(previousGamma);
             previousGamma = -1.0;
         }
+    }
+
+    private static void tickFly(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule fly = find("Fly");
+        boolean enabled = fly != null && fly.enabled();
+        if (!enabled) {
+            if (flyWasActive) {
+                player.setNoGravity(flyOriginalNoGravity);
+                flyWasActive = false;
+            }
+            return;
+        }
+
+        if (!flyWasActive) {
+            flyOriginalNoGravity = player.hasNoGravity();
+            flyWasActive = true;
+        }
+        player.setNoGravity(true);
+
+        float forward = 0.0F;
+        float sideways = 0.0F;
+        if (client.options.forwardKey.isPressed()) forward += 1.0F;
+        if (client.options.backKey.isPressed()) forward -= 1.0F;
+        if (client.options.leftKey.isPressed()) sideways += 1.0F;
+        if (client.options.rightKey.isPressed()) sideways -= 1.0F;
+
+        double yaw = Math.toRadians(player.getYaw());
+        double sin = Math.sin(yaw);
+        double cos = Math.cos(yaw);
+        double vx = (-sin * forward + cos * sideways) * 0.42;
+        double vz = (cos * forward + sin * sideways) * 0.42;
+        double vy = client.options.jumpKey.isPressed() ? 0.42
+                : client.options.sneakKey.isPressed() ? -0.42 : 0.0;
+        player.setVelocity(vx, vy, vz);
     }
 
     private static void tickNoFall(ClientPlayerEntity player) {
