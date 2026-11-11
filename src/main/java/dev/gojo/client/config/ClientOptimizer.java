@@ -6,7 +6,7 @@ import net.minecraft.client.option.GraphicsMode;
 import net.minecraft.particle.ParticlesMode;
 
 /**
- * Applies a conservative client-side performance preset.
+ * Applies an aggressive client-side performance preset for higher FPS.
  * These settings can be changed again from Minecraft's Video Settings.
  */
 public final class ClientOptimizer {
@@ -22,9 +22,9 @@ public final class ClientOptimizer {
         options.getCloudRenderMode().setValue(CloudRenderMode.OFF);
         options.getEntityShadows().setValue(false);
         options.getBiomeBlendRadius().setValue(0);
-        options.getViewDistance().setValue(Math.min(options.getViewDistance().getValue(), 8));
-        options.getSimulationDistance().setValue(Math.min(options.getSimulationDistance().getValue(), 5));
-        options.getEntityDistanceScaling().setValue(Math.min(options.getEntityDistanceScaling().getValue(), 0.75));
+        options.getViewDistance().setValue(Math.min(options.getViewDistance().getValue(), 6));
+        options.getSimulationDistance().setValue(Math.min(options.getSimulationDistance().getValue(), 4));
+        options.getEntityDistanceScaling().setValue(Math.min(options.getEntityDistanceScaling().getValue(), 0.5));
         options.write();
     }
 }
