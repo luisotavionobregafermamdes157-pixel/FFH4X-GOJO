@@ -232,10 +232,11 @@ public final class ModuleManager {
         double yaw = Math.toRadians(player.getYaw());
         double sin = Math.sin(yaw);
         double cos = Math.cos(yaw);
-        double vx = (-sin * forward + cos * sideways) * 0.42;
-        double vz = (cos * forward + sin * sideways) * 0.42;
-        double vy = client.options.jumpKey.isPressed() ? 0.42
-                : client.options.sneakKey.isPressed() ? -0.42 : 0.0;
+        double flySpeed = 0.05 + fly.value() * 0.015;
+        double vx = (-sin * forward + cos * sideways) * flySpeed;
+        double vz = (cos * forward + sin * sideways) * flySpeed;
+        double vy = client.options.jumpKey.isPressed() ? flySpeed
+                : client.options.sneakKey.isPressed() ? -flySpeed : 0.0;
         player.setVelocity(vx, vy, vz);
     }
 
