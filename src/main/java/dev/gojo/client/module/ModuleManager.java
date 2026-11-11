@@ -34,8 +34,7 @@ public final class ModuleManager {
     private static final List<GojoModule> MODULES = new ArrayList<>();
     private static final Map<String, GojoModule> BY_NAME = new LinkedHashMap<>();
     private static final Map<Entity, Boolean> PREVIOUS_GLOW = new HashMap<>();
-    private static final Map<Entity, Box> ORIGINAL_HITBOXES = new HashMap<>();
-    private static final Map<Entity, Vec3d> ORIGINAL_HITBOX_POSITIONS = new HashMap<>();
+    private static final Set<Entity> MODIFIED_HITBOXES = new HashSet<>();
     private static boolean registered;
     private static long nextAutoClickNanos;
     private static long nextMobKillAuraNanos;
@@ -390,6 +389,15 @@ public final class ModuleManager {
         }
     }
 
+    private static Box vanillaHitbox(Entity entity) {
+        double halfWidth = entity.getWidth() * 0.5;
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        return new Box(x - halfWidth, y, z - halfWidth,
+                x + halfWidth, y + entity.getHeight(), z + halfWidth);
+    }
+
     private static void tickHitboxes(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule hitbox = find("Hitbox");
         if (hitbox == null || !hitbox.enabled()) {
@@ -398,41 +406,34 @@ public final class ModuleManager {
         }
 
         Set<Entity> nearby = new HashSet<>();
-        double expansion = 0.02 + hitbox.value() * 0.012;
+        // Keep the expansion bounded: the slider controls a modest local targeting adjustment.
+        double expansion = Math.max(0.005, Math.min(0.50, hitbox.value() * 0.005));
+        Box searchArea = player.getBoundingBox().expand(64.0);
+
         for (LivingEntity entity : client.world.getEntitiesByClass(
-                LivingEntity.class, player.getBoundingBox().expand(64.0),
-                candidate -> candidate.isAlive())) {
-            Vec3d currentPos = new Vec3d(entity.getX(), entity.getY(), entity.getZ());
-            Box original = ORIGINAL_HITBOXES.get(entity);
-            Vec3d previousPos = ORIGINAL_HITBOX_POSITIONS.get(entity);
-            if (original == null || previousPos == null) {
-                original = entity.getBoundingBox();
-            } else {
-                original = original.offset(currentPos.subtract(previousPos));
-            }
-            ORIGINAL_HITBOXES.put(entity, original);
-            ORIGINAL_HITBOX_POSITIONS.put(entity, currentPos);
-            entity.setBoundingBox(original.expand(expansion, expansion * 0.75, expansion));
+                LivingEntity.class, searchArea,
+                candidate -> candidate != player && candidate.isAlive())) {
+            Box base = vanillaHitbox(entity);
+            entity.setBoundingBox(base.expand(expansion, expansion * 0.75, expansion));
+            MODIFIED_HITBOXES.add(entity);
             nearby.add(entity);
         }
 
-        Iterator<Map.Entry<Entity, Box>> iterator = ORIGINAL_HITBOXES.entrySet().iterator();
+        Iterator<Entity> iterator = MODIFIED_HITBOXES.iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Entity, Box> entry = iterator.next();
-            if (!nearby.contains(entry.getKey())) {
-                entry.getKey().setBoundingBox(entry.getValue());
-                ORIGINAL_HITBOX_POSITIONS.remove(entry.getKey());
+            Entity entity = iterator.next();
+            if (!nearby.contains(entity)) {
+                entity.setBoundingBox(vanillaHitbox(entity));
                 iterator.remove();
             }
         }
     }
 
     private static void restoreHitboxes() {
-        for (Map.Entry<Entity, Box> entry : ORIGINAL_HITBOXES.entrySet()) {
-            entry.getKey().setBoundingBox(entry.getValue());
+        for (Entity entity : MODIFIED_HITBOXES) {
+            entity.setBoundingBox(vanillaHitbox(entity));
         }
-        ORIGINAL_HITBOXES.clear();
-        ORIGINAL_HITBOX_POSITIONS.clear();
+        MODIFIED_HITBOXES.clear();
     }
 
     private static void tickScaffold(MinecraftClient client, ClientPlayerEntity player) {
