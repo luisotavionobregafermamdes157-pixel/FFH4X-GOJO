@@ -40,7 +40,7 @@ public final class WorldOverlayRenderer {
         var consumers = context.consumers();
         if (matrices == null || consumers == null) return;
 
-        var camera = client.gameRenderer.getCamera().getPos();
+        var camera = client.gameRenderer.getCamera().getCameraPos();
         matrices.push();
         matrices.translate(-camera.x, -camera.y, -camera.z);
         var lines = consumers.getBuffer(RenderLayers.LINES);
