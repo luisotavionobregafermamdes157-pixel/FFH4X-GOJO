@@ -2,6 +2,7 @@ package dev.gojo.client.gui;
 
 import dev.gojo.client.config.ConfigManager;
 import dev.gojo.client.config.ClientProfileManager;
+import dev.gojo.client.config.ClientLanguage;
 import dev.gojo.client.module.GojoModule;
 import dev.gojo.client.module.ModuleCategory;
 import dev.gojo.client.module.ModuleManager;
@@ -35,8 +36,8 @@ public final class GojoScreen extends Screen {
         panelH = Math.max(240, Math.min(390, height - 16));
         panelX = (width - panelW) / 2;
         panelY = (height - panelH) / 2;
-        search = new TextFieldWidget(textRenderer, panelX + 178, panelY + 43, panelW - 200, 20, Text.literal("Buscar módulos"));
-        search.setPlaceholder(Text.literal("Buscar módulos..."));
+        search = new TextFieldWidget(textRenderer, panelX + 178, panelY + 43, panelW - 292, 20, Text.literal(pt() ? "Buscar módulos" : "Search modules"));
+        search.setPlaceholder(Text.literal(pt() ? "Buscar módulos..." : "Search modules..."));
         search.setChangedListener(value -> refreshFiltered());
         addDrawableChild(search);
         refreshFiltered();
@@ -52,9 +53,13 @@ public final class GojoScreen extends Screen {
         String playerStats = "JOGADOR: " + ClientProfileManager.getPlayerName()
                 + "  |  ENTRADAS: " + ClientProfileManager.getLoginCount();
         context.drawText(textRenderer, playerStats, panelX + 18, panelY + 30, 0xFFB9B9D0, false);
-        context.drawText(textRenderer, "SHIFT DIREITO  ·  FECHAR", panelX + panelW - 145, panelY + 19, 0xFF77778A, false);
+        context.drawText(textRenderer, pt() ? "SHIFT DIREITO  ·  FECHAR" : "RIGHT SHIFT  ·  CLOSE", panelX + panelW - 145, panelY + 19, 0xFF77778A, false);
         context.fill(panelX + 14, panelY + 42, panelX + 162, panelY + 65, 0xFF222232);
-        context.drawText(textRenderer, "GERENCIADOR DE MÓDULOS", panelX + 22, panelY + 49, 0xFFB9B9D0, false);
+        context.drawText(textRenderer, pt() ? "GERENCIADOR DE MÓDULOS" : "MODULE MANAGER", panelX + 22, panelY + 49, 0xFFB9B9D0, false);
+        context.fill(panelX + panelW - 104, panelY + 42, panelX + panelW - 18, panelY + 65, 0xFF303047);
+        String languageLabel = pt() ? "IDIOMA: PT" : "LANG: EN";
+        int languageWidth = textRenderer.getWidth(languageLabel);
+        context.drawText(textRenderer, languageLabel, panelX + panelW - 61 - languageWidth / 2, panelY + 49, 0xFF9EDBFF, true);
         context.fill(panelX + 14, panelY + 81, panelX + 146, panelY + panelH - 15, PANEL);
         int cy = panelY + 94;
         for (ModuleCategory category : ModuleCategory.values()) {
@@ -64,7 +69,7 @@ public final class GojoScreen extends Screen {
             context.drawText(textRenderer, translatedCategory(category), panelX + 30, cy, active ? 0xFFFFFFFF : 0xFF9696A9, false);
             cy += 34;
         }
-        context.drawText(textRenderer, "CONFIGURAÇÃO  ·  SALVAMENTO AUTOMÁTICO", panelX + 25, panelY + panelH - 34, 0xFF77778A, false);
+        context.drawText(textRenderer, pt() ? "CONFIGURAÇÃO  ·  SALVAMENTO AUTOMÁTICO" : "SETTINGS  ·  AUTO-SAVED", panelX + 25, panelY + panelH - 34, 0xFF77778A, false);
         int listX = panelX + 164;
         int listY = panelY + 78;
         int listW = panelW - 178;
@@ -95,17 +100,20 @@ public final class GojoScreen extends Screen {
                 int bx = listX + listW - 66;
                 int color = module.implemented() ? (module.enabled() ? 0xFF245E83 : 0xFF343444) : 0xFF292932;
                 context.fill(bx, rowY + 8, bx + 48, rowY + 28, color);
-                String status = !module.implemented() ? "EM BREVE" : module.enabled() ? "LIGADO" : "DESLIGADO";
+                String status = !module.implemented() ? (pt() ? "EM BREVE" : "SOON") : module.enabled() ? (pt() ? "LIGADO" : "ON") : (pt() ? "DESLIGADO" : "OFF");
                 int sw = textRenderer.getWidth(status);
                 context.drawText(textRenderer, status, bx + (48 - sw) / 2, rowY + 14, module.enabled() ? 0xFF9EDBFF : 0xFFAAAAAF, false);
             }
             rowY += ROW_STEP;
         }
-        context.drawText(textRenderer, "" + cachedVisible.size() + " MÓDULOS", listX + 10, panelY + panelH - 29, 0xFF77778A, false);
+        context.drawText(textRenderer, "" + cachedVisible.size() + (pt() ? " MÓDULOS" : " MODULES"), listX + 10, panelY + panelH - 29, 0xFF77778A, false);
         super.render(context, mouseX, mouseY, delta);
     }
 
+    private static boolean pt() { return ClientLanguage.isPortuguese(); }
+
     private static String translatedName(String name) {
+        if (!pt()) return name;
         return switch (name) {
             case "Reach Indicator" -> "Indicador de Alcance";
             case "Target Indicator" -> "Indicador de Alvo";
@@ -159,6 +167,7 @@ public final class GojoScreen extends Screen {
     }
 
     private static String translatedDescription(String description) {
+        if (!pt()) return description;
         return switch (description) {
             case "Displays distance to the crosshair target." -> "Mostra a distância até o alvo na mira.";
             case "Shows the entity currently under the crosshair." -> "Mostra a entidade que está na mira.";
@@ -211,6 +220,14 @@ public final class GojoScreen extends Screen {
     }
 
     private static String translatedCategory(ModuleCategory category) {
+        if (!pt()) return switch (category) {
+            case COMBAT -> "COMBAT";
+            case MOVEMENT -> "MOVEMENT";
+            case RENDER -> "RENDER";
+            case PLAYER -> "PLAYER";
+            case WORLD -> "WORLD";
+            case HUD -> "HUD";
+        };
         return switch (category) {
             case COMBAT -> "COMBATE";
             case MOVEMENT -> "MOVIMENTO";
@@ -249,6 +266,13 @@ public final class GojoScreen extends Screen {
         double mouseY = click.y();
         int button = click.button();
         if (button == 0) {
+            if (mouseX >= panelX + panelW - 104 && mouseX <= panelX + panelW - 18
+                    && mouseY >= panelY + 42 && mouseY <= panelY + 65) {
+                ClientLanguage.toggle();
+                cachedQuery = null;
+                refreshFiltered();
+                return true;
+            }
             int catY = panelY + 94;
             for (ModuleCategory category : ModuleCategory.values()) {
                 if (mouseX >= panelX + 15 && mouseX <= panelX + 146 && mouseY >= catY - 7 && mouseY <= catY + 19) {
