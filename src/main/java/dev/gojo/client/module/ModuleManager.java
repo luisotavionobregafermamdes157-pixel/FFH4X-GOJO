@@ -66,6 +66,9 @@ public final class ModuleManager {
         add("Scaffold", "Places blocks beneath you while bridging, when a valid support face exists.", ModuleCategory.MOVEMENT, true);
         add("Fullbright", "Sets client gamma to maximum brightness.", ModuleCategory.RENDER, true);
         add("Entity ESP", "Highlights nearby living entities through walls.", ModuleCategory.RENDER, true);
+        add("Player ESP", "Highlights nearby player entities through walls.", ModuleCategory.RENDER, true);
+        add("Player Box ESP", "Draws a 3D outline around nearby player hitboxes.", ModuleCategory.RENDER, true);
+        add("X-Ray", "Highlights valuable ore blocks in loaded chunks with an on-screen toggle.", ModuleCategory.RENDER, true);
         add("Chest ESP", "Shows nearby chests, trapped chests, ender chests and barrels with distance and coordinates.", ModuleCategory.RENDER, true);
         add("Furnace ESP", "Shows nearby furnaces, blast furnaces and smokers with distance and coordinates.", ModuleCategory.RENDER, true);
         add("Tracers", "Draws on-screen direction lines to nearby living entities.", ModuleCategory.RENDER, true);
@@ -295,8 +298,11 @@ public final class ModuleManager {
     }
 
     private static void tickEsp(MinecraftClient client, ClientPlayerEntity player) {
-        GojoModule esp = find("Entity ESP");
-        if (esp == null || !esp.enabled()) {
+        GojoModule entityEsp = find("Entity ESP");
+        GojoModule playerEsp = find("Player ESP");
+        boolean showEntities = entityEsp != null && entityEsp.enabled();
+        boolean showPlayers = playerEsp != null && playerEsp.enabled();
+        if (!showEntities && !showPlayers) {
             restoreGlow();
             return;
         }
@@ -304,6 +310,9 @@ public final class ModuleManager {
         Set<Entity> visibleNow = new HashSet<>();
         for (Entity entity : client.world.getEntities()) {
             if (entity == player || !entity.isAlive() || player.squaredDistanceTo(entity) > 4096.0) continue;
+            boolean shouldHighlight = showEntities && entity instanceof LivingEntity
+                    || showPlayers && entity instanceof PlayerEntity;
+            if (!shouldHighlight) continue;
             PREVIOUS_GLOW.putIfAbsent(entity, entity.isGlowing());
             entity.setGlowing(true);
             visibleNow.add(entity);
