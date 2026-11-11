@@ -3,6 +3,7 @@ package dev.gojo.client.gui;
 import dev.gojo.client.config.ConfigManager;
 import dev.gojo.client.config.ClientProfileManager;
 import dev.gojo.client.config.ClientLanguage;
+import dev.gojo.client.config.ClientOptimizer;
 import dev.gojo.client.module.GojoModule;
 import dev.gojo.client.module.ModuleCategory;
 import dev.gojo.client.module.ModuleManager;
@@ -26,6 +27,7 @@ public final class GojoScreen extends Screen {
     private TextFieldWidget search;
     private int panelX, panelY, panelW, panelH;
     private int scroll;
+    private boolean optimized;
     private String cachedQuery = null;
     private List<GojoModule> cachedVisible = List.of();
 
@@ -69,7 +71,14 @@ public final class GojoScreen extends Screen {
             context.drawText(textRenderer, translatedCategory(category), panelX + 30, cy, active ? 0xFFFFFFFF : 0xFF9696A9, false);
             cy += 34;
         }
-        context.drawText(textRenderer, pt() ? "CONFIGURAÇÃO  ·  SALVAMENTO AUTOMÁTICO" : "SETTINGS  ·  AUTO-SAVED", panelX + 25, panelY + panelH - 34, 0xFF77778A, false);
+        int optimizeY = panelY + panelH - 43;
+        context.fill(panelX + 19, optimizeY, panelX + 140, optimizeY + 25, optimized ? 0xFF245E55 : 0xFF303047);
+        String optimizeLabel = optimized
+                ? (pt() ? "JOGO OTIMIZADO" : "GAME OPTIMIZED")
+                : (pt() ? "OTIMIZAR JOGO" : "OPTIMIZE GAME");
+        int optimizeWidth = textRenderer.getWidth(optimizeLabel);
+        context.drawText(textRenderer, optimizeLabel, panelX + 79 - optimizeWidth / 2, optimizeY + 8,
+                optimized ? 0xFFB5FFE6 : 0xFFB9B9D0, true);
         int listX = panelX + 164;
         int listY = panelY + 78;
         int listW = panelW - 178;
