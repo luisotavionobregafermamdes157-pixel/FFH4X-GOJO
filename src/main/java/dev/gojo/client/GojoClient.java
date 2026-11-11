@@ -2,6 +2,7 @@ package dev.gojo.client;
 
 import dev.gojo.client.config.ConfigManager;
 import dev.gojo.client.config.ClientProfileManager;
+import dev.gojo.client.config.ClientLanguage;
 import dev.gojo.client.gui.GojoScreen;
 import dev.gojo.client.hud.GojoHud;
 import dev.gojo.client.module.ModuleManager;
@@ -24,6 +25,7 @@ public final class GojoClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ConfigManager.load();
+        ClientLanguage.load();
         ClientProfileManager.initialize(MinecraftClient.getInstance().getSession().getUsername());
         ModuleManager.registerDefaults();
 
