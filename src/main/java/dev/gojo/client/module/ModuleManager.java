@@ -88,12 +88,14 @@ public final class ModuleManager {
         add("Durability", "Displays equipped item durability.", ModuleCategory.HUD, true);
         add("Clock", "Displays local system time.", ModuleCategory.HUD, true);
         add("Server Info", "Displays server and connection details.", ModuleCategory.HUD, true);
+        add("Connection Monitor", "Shows whether the client is in singleplayer or multiplayer and displays current ping.", ModuleCategory.HUD, true);
+        add("Server Compatibility", "Disables automated combat and movement modules while connected to a multiplayer server.", ModuleCategory.PLAYER, true);
         ConfigManager.apply(MODULES);
     }
 
     private static void add(String name, String description, ModuleCategory category, boolean implemented) {
         GojoModule module = new GojoModule(name, description, category, implemented);
-        if (implemented && (name.equals("FPS") || name.equals("HUD Coordinates") || name.equals("Clock"))) {
+        if (implemented && (name.equals("FPS") || name.equals("HUD Coordinates") || name.equals("Clock") || name.equals("Connection Monitor"))) {
             module.setEnabled(true);
         }
         MODULES.add(module);
@@ -111,6 +113,8 @@ public final class ModuleManager {
             restoreFullbright(client);
             return;
         }
+
+        tickServerCompatibility(client);
 
         GojoModule sprint = find("Auto Sprint");
         if (sprint != null && sprint.enabled() && client.options.forwardKey.isPressed()
@@ -149,6 +153,32 @@ public final class ModuleManager {
     }
 
     
+    private static void tickServerCompatibility(MinecraftClient client) {
+        GojoModule compatibility = find("Server Compatibility");
+        if (compatibility == null || !compatibility.enabled() || client.getCurrentServerEntry() == null) return;
+
+        String[] restrictedModules = {
+                "KillAura", "Mob KillAura", "Hitbox", "Aimbot", "Auto Click",
+                "Speed", "NoFall", "NoSlow", "Step Assist", "Scaffold"
+        };
+        boolean changed = false;
+        for (String name : restrictedModules) {
+            GojoModule module = find(name);
+            if (module != null && module.enabled()) {
+                module.setEnabled(false);
+                changed = true;
+            }
+        }
+        if (changed) {
+            nextAutoClickNanos = 0L;
+            nextPlayerKillAuraNanos = 0L;
+            nextMobKillAuraNanos = 0L;
+            ConfigManager.save(MODULES);
+            net.minecraft.client.MinecraftClient.getInstance().execute(() ->
+                    dev.gojo.client.GojoClient.LOGGER.info("Server Compatibility disabled automated combat/movement modules on a multiplayer server."));
+        }
+    }
+
     private static void tickFullbright(MinecraftClient client) {
         GojoModule fullbright = find("Fullbright");
         if (fullbright != null && fullbright.enabled()) {
