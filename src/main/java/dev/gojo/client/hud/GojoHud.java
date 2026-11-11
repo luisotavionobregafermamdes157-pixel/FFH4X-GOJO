@@ -33,7 +33,7 @@ public final class GojoHud {
         int x = 8;
         int y = 8;
         y = line(context, "GOJO CLIENT", x, y, 0xFF82B9FF);
-        if (enabled("FPS")) y = line(context, "FPS  " + client.getCurrentFps(), x, y, 0xFFE8E8F4);
+        if (enabled("FPS")) y = line(context, "QUADROS  " + client.getCurrentFps(), x, y, 0xFFE8E8F4);
         if (enabled("HUD Coordinates") || enabled("Coordinates")) {
             double px = client.player.getX();
             double py = client.player.getY();
@@ -47,34 +47,34 @@ public final class GojoHud {
         if (enabled("Ping")) {
             PlayerListEntry entry = client.getNetworkHandler() == null ? null
                     : client.getNetworkHandler().getPlayerListEntry(client.player.getUuid());
-            y = line(context, "PING  " + (entry == null ? "--" : entry.getLatency() + " ms"), x, y, 0xFFE8E8F4);
+            y = line(context, "LATÊNCIA  " + (entry == null ? "--" : entry.getLatency() + " ms"), x, y, 0xFFE8E8F4);
         }
         if (enabled("Connection Monitor")) {
             PlayerListEntry entry = client.getNetworkHandler() == null ? null
                     : client.getNetworkHandler().getPlayerListEntry(client.player.getUuid());
-            String connection = client.getCurrentServerEntry() == null ? "LOCAL" : "MULTIPLAYER";
+            String connection = client.getCurrentServerEntry() == null ? "LOCAL" : "MULTIJOGADOR";
             String latency = entry == null ? "--" : entry.getLatency() + " ms";
-            y = line(context, "CONNECTION  " + connection + "  PING " + latency, x, y, 0xFF9EDBFF);
+            y = line(context, "CONEXÃO  " + connection + "  LATÊNCIA " + latency, x, y, 0xFF9EDBFF);
         }
-        if (enabled("Clock")) y = line(context, "TIME  " + LocalTime.now().format(CLOCK), x, y, 0xFFE8E8F4);
+        if (enabled("Clock")) y = line(context, "HORA  " + LocalTime.now().format(CLOCK), x, y, 0xFFE8E8F4);
         if (enabled("Durability")) {
             var stack = client.player.getMainHandStack();
             if (!stack.isEmpty() && stack.isDamageable()) {
                 int remaining = stack.getMaxDamage() - stack.getDamage();
-                y = line(context, "DURABILITY  " + remaining + "/" + stack.getMaxDamage(), x, y, 0xFFFFD18B);
+                y = line(context, "DURABILIDADE  " + remaining + "/" + stack.getMaxDamage(), x, y, 0xFFFFD18B);
             }
         }
         if (enabled("Player Info")) {
-            y = line(context, "PLAYER  " + client.player.getName().getString()
-                    + "  HP " + String.format("%.1f", client.player.getHealth())
-                    + "  FOOD " + client.player.getHungerManager().getFoodLevel(),
+            y = line(context, "JOGADOR  " + client.player.getName().getString()
+                    + "  VIDA " + String.format("%.1f", client.player.getHealth())
+                    + "  FOME " + client.player.getHungerManager().getFoodLevel(),
                     x, y, 0xFF9EDBFF);
         }
         if (enabled("Environment Info")) {
             String biome = client.world.getBiome(client.player.getBlockPos()).getKey()
                     .map(key -> key.getValue().toString()).orElse("unknown");
-            y = line(context, "BIOME  " + trim(biome, 34)
-                    + "  DIM " + client.world.getRegistryKey().getValue(), x, y, 0xFF9EDBFF);
+            y = line(context, "BIOMA  " + trim(biome, 34)
+                    + "  DIMENSÃO " + client.world.getRegistryKey().getValue(), x, y, 0xFF9EDBFF);
         }
         if (enabled("Entity Viewer")) {
             int players = 0;
@@ -84,32 +84,32 @@ public final class GojoHud {
                 if (entity instanceof net.minecraft.entity.player.PlayerEntity) players++;
                 else if (entity instanceof net.minecraft.entity.LivingEntity) mobs++;
             }
-            y = line(context, "ENTITIES  PLAYERS " + players + "  MOBS " + mobs, x, y, 0xFFB9A0FF);
+            y = line(context, "ENTIDADES  JOGADORES " + players + "  CRIATURAS " + mobs, x, y, 0xFFB9A0FF);
         }
         if (enabled("Combat Info")) {
             String target = client.crosshairTarget instanceof EntityHitResult hit
-                    ? trim(hit.getEntity().getName().getString(), 22) : "none";
-            y = line(context, "COMBAT  TARGET " + target + "  HP " + String.format("%.1f", client.player.getHealth()),
+                    ? trim(hit.getEntity().getName().getString(), 22)  : "nenhum";
+            y = line(context, "COMBATE  ALVO " + target + "  VIDA " + String.format("%.1f", client.player.getHealth()),
                     x, y, 0xFFFFA7E8);
         }
         if (enabled("Block Indicator") && client.crosshairTarget instanceof BlockHitResult blockHit
                 && blockHit.getType() == HitResult.Type.BLOCK) {
             String block = client.world.getBlockState(blockHit.getBlockPos()).getBlock().getName().getString();
-            y = line(context, "LOOKING AT  " + trim(block, 30), x, y, 0xFFFFD18B);
+            y = line(context, "OLHANDO PARA  " + trim(block, 30), x, y, 0xFFFFD18B);
         }
         if (enabled("Server Info")) {
-            String server = client.getCurrentServerEntry() == null ? "Singleplayer" : client.getCurrentServerEntry().address;
-            y = line(context, "SERVER  " + trim(server, 36), x, y, 0xFFB4B4C8);
+            String server = client.getCurrentServerEntry() == null ? "Um jogador" : client.getCurrentServerEntry().address;
+            y = line(context, "SERVIDOR  " + trim(server, 36), x, y, 0xFFB4B4C8);
         }
         if (enabled("Chest ESP")) y = renderBlockEntityEsp(context, client, y, true);
         if (enabled("Furnace ESP")) y = renderBlockEntityEsp(context, client, y, false);
         if (enabled("Block Info") && client.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = hit.getBlockPos();
-            line(context, "BLOCK  " + trim(client.world.getBlockState(pos).getBlock().getName().getString(), 28)
+            line(context, "BLOCO  " + trim(client.world.getBlockState(pos).getBlock().getName().getString(), 28)
                     + " @ " + pos.getX() + " " + pos.getY() + " " + pos.getZ(), x, y, 0xFFB4B4C8);
         }
         if (enabled("Target Indicator") && client.crosshairTarget instanceof EntityHitResult hit) {
-            line(context, "TARGET  " + trim(hit.getEntity().getName().getString(), 32), 8, context.getScaledWindowHeight() - 24, 0xFFFFA7E8);
+            line(context, "ALVO  " + trim(hit.getEntity().getName().getString(), 32), 8, context.getScaledWindowHeight() - 24, 0xFFFFA7E8);
         }
         if (enabled("Combat Visuals")) renderCombatVisuals(context, client);
         if (enabled("Tracers")) renderTracers(context, client);
@@ -124,7 +124,7 @@ public final class GojoHud {
         var target = hit.getEntity();
         String name = trim(target.getName().getString(), 28);
         String health = target instanceof net.minecraft.entity.LivingEntity living
-                ? String.format("%.1f HP", living.getHealth()) : "ENTITY";
+                ? String.format("%.1f HP", living.getHealth()) : "ENTIDADE";
         String distance = String.format("%.1f m", client.player.distanceTo(target));
         int centerX = context.getScaledWindowWidth() / 2;
         int top = context.getScaledWindowHeight() - 68;
@@ -195,7 +195,7 @@ public final class GojoHud {
         }
         found.sort(Comparator.comparingDouble(entity -> client.player.squaredDistanceTo(
                 entity.getPos().getX() + 0.5, entity.getPos().getY() + 0.5, entity.getPos().getZ() + 0.5)));
-        String title = chests ? "CHEST ESP" : "FURNACE ESP";
+        String title = chests ? "ESP DE BAÚS" : "ESP DE FORNALHAS";
         int color = chests ? 0xFFFFC66D : 0xFFFF8A65;
         y = line(context, title + "  " + found.size(), 8, y, color);
         int shown = Math.min(5, found.size());
@@ -203,7 +203,7 @@ public final class GojoHud {
             BlockPos pos = found.get(i).getPos();
             double distance = Math.sqrt(client.player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
             y = line(context, String.format("%s  %d %d %d  %.0fm",
-                    chests ? "CHEST" : "FURNACE", pos.getX(), pos.getY(), pos.getZ(), distance),
+                    chests ? "BAÚ" : "FORNALHA", pos.getX(), pos.getY(), pos.getZ(), distance),
                     8, y, 0xFFE8E8F4);
         }
         return y;
