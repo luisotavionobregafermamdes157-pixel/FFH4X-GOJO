@@ -54,6 +54,7 @@ public final class ModuleManager {
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
         add("KillAura", "Automatically attacks visible players in a short range.", ModuleCategory.COMBAT, true);
         add("KillAura 360", "Targets visible players in every direction around you (360-degree targeting).", ModuleCategory.COMBAT, true);
+        add("KeepSprint", "Maintains sprint while moving forward during combat.", ModuleCategory.COMBAT, true);
         add("Mob KillAura", "Automatically attacks visible hostile and passive mobs in range.", ModuleCategory.COMBAT, true);
         add("Hitbox", "Expands nearby player and mob hitboxes (client-side targeting).", ModuleCategory.COMBAT, true);
         add("Auto Click", "Repeats the attack input while the left mouse button is held (1-20 CPS).", ModuleCategory.COMBAT, true);
@@ -64,6 +65,11 @@ public final class ModuleManager {
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
         add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
         add("Step Assist", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
+        add("Step", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
+        add("Sprint", "Automatically sprints while moving forward.", ModuleCategory.MOVEMENT, true);
+        add("Flight", "Client-side flight controls; multiplayer servers may reject movement.", ModuleCategory.MOVEMENT, true);
+        add("HighJump", "Increases jump impulse when jumping from the ground.", ModuleCategory.MOVEMENT, true);
+        add("Velocity", "Scales local horizontal and vertical knockback while hurt.", ModuleCategory.MOVEMENT, true);
         add("Movement Control", "Movement status display and local controls.", ModuleCategory.MOVEMENT, false);
         add("Speed", "Ajusta a velocidade horizontal (1-100).", ModuleCategory.MOVEMENT, true);
         add("Fly", "Permite voar com controle de altura e movimento.", ModuleCategory.MOVEMENT, true);
@@ -292,7 +298,8 @@ public final class ModuleManager {
         tickServerCompatibility(client);
 
         GojoModule sprint = find("Auto Sprint");
-        if (sprint != null && sprint.enabled() && client.options.forwardKey.isPressed()
+        GojoModule sprintAlias = find("Sprint");
+        if (((sprint != null && sprint.enabled()) || (sprintAlias != null && sprintAlias.enabled())) && client.options.forwardKey.isPressed()
                 && !player.isSneaking() && player.getHungerManager().getFoodLevel() > 6) {
             player.setSprinting(true);
         }
@@ -316,6 +323,9 @@ public final class ModuleManager {
         tickFly(client, player);
         tickNoSlow(player);
         tickStepAssist(player);
+        tickHighJump(client, player);
+        tickVelocity(player);
+        tickKeepSprint(client, player);
         tickAutoTool(client, player);
         tickAutoEat(client, player);
         tickInventoryManager(client, player);
@@ -336,7 +346,7 @@ public final class ModuleManager {
 
         String[] restrictedModules = {
                 "KillAura", "KillAura 360", "Mob KillAura", "Hitbox", "Aimbot", "Auto Click",
-                "Speed", "Fly", "NoFall", "NoSlow", "Step Assist", "Scaffold"
+                "Speed", "Fly", "Flight", "NoFall", "NoSlow", "Step Assist", "Step", "Sprint", "HighJump", "Velocity", "Scaffold"
         };
         boolean changed = false;
         for (String name : restrictedModules) {
@@ -377,7 +387,9 @@ public final class ModuleManager {
 
     private static void tickFly(MinecraftClient client, ClientPlayerEntity player) {
         GojoModule fly = find("Fly");
-        boolean enabled = fly != null && fly.enabled();
+        GojoModule flight = find("Flight");
+        boolean enabled = (fly != null && fly.enabled()) || (flight != null && flight.enabled());
+        if (fly == null || !fly.enabled()) fly = flight;
         if (!enabled) {
             if (flyWasActive) {
                 player.setNoGravity(flyOriginalNoGravity);
@@ -428,10 +440,36 @@ public final class ModuleManager {
 
     private static void tickStepAssist(ClientPlayerEntity player) {
         GojoModule step = find("Step Assist");
-        if (step == null || !step.enabled() || !player.horizontalCollision
-                || !player.isOnGround() || player.isSneaking()
+        GojoModule stepAlias = find("Step");
+        if ((step == null || !step.enabled()) && (stepAlias == null || !stepAlias.enabled())) return;
+        if (!player.horizontalCollision || !player.isOnGround() || player.isSneaking()
                 || player.getVelocity().horizontalLengthSquared() < 0.0025) return;
         player.jump();
+    }
+
+    private static void tickHighJump(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule highJump = find("HighJump");
+        if (highJump == null || !highJump.enabled() || !client.options.jumpKey.isPressed()
+                || !player.isOnGround() || player.isTouchingWater() || player.isInLava()) return;
+        Vec3d velocity = player.getVelocity();
+        double multiplier = 1.0 + highJump.value() / 100.0;
+        player.setVelocity(velocity.x, 0.42 * multiplier, velocity.z);
+    }
+
+    private static void tickVelocity(ClientPlayerEntity player) {
+        GojoModule velocityModule = find("Velocity");
+        if (velocityModule == null || !velocityModule.enabled() || player.hurtTime <= 0) return;
+        double scale = velocityModule.value() / 100.0;
+        Vec3d velocity = player.getVelocity();
+        player.setVelocity(velocity.x * scale, velocity.y * scale, velocity.z * scale);
+    }
+
+    private static void tickKeepSprint(MinecraftClient client, ClientPlayerEntity player) {
+        GojoModule keepSprint = find("KeepSprint");
+        if (keepSprint != null && keepSprint.enabled() && client.options.forwardKey.isPressed()
+                && !player.isSneaking() && player.getHungerManager().getFoodLevel() > 6) {
+            player.setSprinting(true);
+        }
     }
 
     private static void tickAutoTool(MinecraftClient client, ClientPlayerEntity player) {
