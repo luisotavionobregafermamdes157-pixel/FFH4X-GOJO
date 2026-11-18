@@ -59,7 +59,7 @@ public final class ModuleManager {
         add("Aimbot", "Smoothly aims at visible players inside the adjustable FOV.", ModuleCategory.COMBAT, true);
         add("Combat Visuals", "Shows a target card with health and distance.", ModuleCategory.COMBAT, true);
         add("Auto Sprint", "Sprints while moving forward, when allowed by the player state.", ModuleCategory.MOVEMENT, true);
-        add("Auto Eat", "Uses food from your hotbar when hunger is low.", ModuleCategory.PLAYER, true);
+        add("Auto Eat", "Uses food from your hotbar when hunger is low.", ModuleCategory.MISCELLANEOUS, true);
         add("NoFall", "Resets local fall distance while enabled.", ModuleCategory.MOVEMENT, true);
         add("NoSlow", "Applies a local movement compensation while using items; server rules still apply.", ModuleCategory.MOVEMENT, true);
         add("Step Assist", "Automatically jumps when moving into a low obstacle.", ModuleCategory.MOVEMENT, true);
@@ -87,7 +87,7 @@ public final class ModuleManager {
         add("Structure Finder", "Visual structure discovery; no server scanning.", ModuleCategory.WORLD, false);
         add("Entity Viewer", "Displays nearby entity counts.", ModuleCategory.WORLD, true);
         add("Environment Info", "Displays biome and dimension context.", ModuleCategory.WORLD, true);
-        add("FPS", "Displays current frames per second.", ModuleCategory.HUD, true);
+        add("FPS", "Displays current frames per second.", ModuleCategory.OTHER, true);
         add("Ping", "Displays connection latency when available.", ModuleCategory.HUD, true);
         add("HUD Coordinates", "Coordinates overlay.", ModuleCategory.HUD, true);
         add("HUD Speed", "Movement speed overlay.", ModuleCategory.HUD, true);
@@ -96,7 +96,175 @@ public final class ModuleManager {
         add("Server Info", "Displays server and connection details.", ModuleCategory.HUD, true);
         add("Connection Monitor", "Shows whether the client is in singleplayer or multiplayer and displays current ping.", ModuleCategory.HUD, true);
         add("Server Compatibility", "Disables automated combat and movement modules while connected to a multiplayer server.", ModuleCategory.PLAYER, true);
+
+        registerCatalog(ModuleCategory.COMBAT, """
+                AntiBots|Anti-bot entity filtering
+                Aura|Automated combat targeting
+                AutoArmor|Automatic armor management
+                AutoBowRelease|Automatic bow release
+                AutoCrystal|Crystal combat automation
+                AutoLog|Automatic disconnect threshold
+                AutoPot|Automatic potion use
+                AutoSoup|Automatic soup use
+                AutoTotem|Automatic totem management
+                AutoTrap|Automatic target trapping
+                AutoXP|Automatic experience bottle use
+                Backtrack|Target history compensation
+                BowAim|Bow aiming assistance
+                Criticals|Critical hit automation
+                FeetTrap|Trap placement
+                HoleFill|Hole filling
+                KeepSprint|Sprint retention during attacks
+                NoHitDelay|Local hit delay adjustment
+                Replenish|Hotbar replenishment
+                SelfFill|Self enclosure placement
+                SelfTrap|Self trapping
+                SprintReset|Sprint reset timing
+                ThrowPot|Potion throwing automation
+                """);
+        registerCatalog(ModuleCategory.EXPLOITS, """
+                AntiHunger|Hunger packet manipulation
+                ChorusControl|Chorus fruit control
+                ClickTP|Click teleport
+                ColorSigns|Colored sign text
+                Disabler|Packet bypass behavior
+                ExtendedFirework|Extended firework flight
+                FastProjectile|Projectile timing
+                FastUse|Item use timing
+                NewChunks|New chunk visualization
+                NoMineAnimation|Mining animation toggle
+                Orebfuscator|Ore obfuscation analysis
+                PacketFly|Packet-based flight
+                Phase|Collision bypass
+                PingSpoof|Latency packet spoofing
+                PortalGodMode|Portal damage behavior
+                Reach|Extended interaction reach
+                Swing|Swing animation control
+                """);
+        registerCatalog(ModuleCategory.MISCELLANEOUS, """
+                Announcer|Announces player actions
+                AntiAFK|Prevents idle timeout
+                AntiAim|View rotation behavior
+                AntiBookBan|Book payload protection
+                AntiSpam|Chat spam filtering
+                AntiVanish|Vanish detection
+                AutoAccept|Automatic request acceptance
+                AutoEat|Automatic food use
+                AutoFish|Automatic fishing
+                AutoMount|Automatic mount interaction
+                AutoReconnect|Reconnect helper
+                AutoRespawn|Automatic respawn
+                BeaconSelector|Beacon menu helper
+                ChestAura|Nearby container interaction
+                ChestStealer|Container looting automation
+                Heaven|Utility movement preset
+                InvCleaner|Inventory cleanup
+                MiddleClick|Middle-click actions
+                NoSoundLag|Sound performance control
+                NoteBot|Note block playback helper
+                NoteTuner|Note block tuning
+                SkinBlink|Skin visibility effect
+                Sneak|Sneak toggle
+                SongStealer|Note block song export
+                Spammer|Chat message repeater
+                Timer|Client tick timing display
+                UnfocusedFPS|Unfocused frame-rate control
+                XCarry|Extra inventory carry display
+                """);
+        registerCatalog(ModuleCategory.MOVEMENT, """
+                AntiLevitation|Levitation effect handling
+                AutoWalk|Automatic forward movement
+                BoatFly|Boat movement mode
+                ElytraFly|Elytra movement helper
+                EntityControl|Rideable entity control
+                EntitySpeed|Rideable entity speed
+                FakeLag|Local latency simulation
+                FastAccel|Acceleration adjustment
+                FastFall|Falling speed adjustment
+                FastSwim|Swimming speed adjustment
+                Flight|Flight movement mode
+                HighJump|Jump height adjustment
+                IceSpeed|Ice movement adjustment
+                Jesus|Fluid surface movement
+                LongJump|Long jump movement
+                NoFall|Fall damage handling
+                NoJumpDelay|Jump delay adjustment
+                NoSlow|Item slowdown adjustment
+                Parkour|Automatic edge jumping
+                Speed|Movement speed adjustment
+                Sprint|Automatic sprint
+                Step|Step height assistance
+                TickShift|Tick timing adjustment
+                TridentFly|Trident movement helper
+                Velocity|Knockback adjustment
+                Yaw|Yaw control
+                """);
+        registerCatalog(ModuleCategory.RENDER, """
+                BetterChat|Chat presentation
+                BlockHighlight|Block highlight overlay
+                BreadCrumbs|Movement path markers
+                ESP|Entity highlighting
+                ExtraTab|Expanded player list
+                FOVModifier|Field of view adjustment
+                Freecam|Detached camera
+                Fullbright|Maximum client brightness
+                InventoryInfo|Inventory information overlay
+                NameProtect|Name masking
+                Nametags|Enhanced entity labels
+                NoBob|Disable view bobbing
+                NoRender|Disable selected visual effects
+                NoRotate|Camera rotation control
+                NoWeather|Hide weather effects
+                OldPotions|Legacy potion HUD
+                Search|Block search overlay
+                Shader|Shader selection helper
+                Skeleton|Entity skeleton overlay
+                Skybox|Skybox presentation
+                SmallShield|Shield size presentation
+                Tracers|Entity direction lines
+                Trajectories|Projectile trajectory preview
+                ViewClip|Camera clipping control
+                ViewModel|Held item presentation
+                Waypoints|World waypoint markers
+                """);
+        registerCatalog(ModuleCategory.WORLD, """
+                AirPlace|Air placement helper
+                AntiInteract|Interaction guard
+                AutoMine|Automatic block mining
+                AutoTunnel|Tunnel mining helper
+                Avoid|Hazard avoidance
+                FastPlace|Placement timing adjustment
+                Fucker|Target block breaking
+                GhostHand|Interaction reach helper
+                MultiTask|Concurrent item actions
+                NoGlitchBlocks|Glitch block handling
+                Nuker|Area block breaking
+                Scaffold|Bridge placement
+                Speedmine|Mining speed adjustment
+                Wallhack|World visibility overlay
+                """);
+        registerCatalog(ModuleCategory.OTHER, """
+                Capes|Cape presentation
+                Chat|Chat utilities
+                ClickGui|Click GUI settings
+                Colors|Client color theme
+                Font|Font settings
+                HUD|HUD configuration
+                Rotations|Rotation display
+                """);
+        registerCatalog(ModuleCategory.DEBUG, """
+                UptimeResolver|Client uptime diagnostics
+                """);
+
         ConfigManager.apply(MODULES);
+    }
+
+    private static void registerCatalog(ModuleCategory category, String catalog) {
+        for (String line : catalog.strip().split("\\R")) {
+            String[] parts = line.split("\\|", 2);
+            if (parts.length != 2 || BY_NAME.containsKey(parts[0])) continue;
+            add(parts[0], parts[1] + " (not implemented yet).", category, false);
+        }
     }
 
     private static void add(String name, String description, ModuleCategory category, boolean implemented) {
