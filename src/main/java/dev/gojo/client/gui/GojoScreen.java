@@ -239,17 +239,21 @@ public final class GojoScreen extends Screen {
             case COMBAT -> "COMBAT";
             case MOVEMENT -> "MOVEMENT";
             case RENDER -> "RENDER";
-            case PLAYER -> "PLAYER";
+            case EXPLOITS -> "EXPLOITS";
+            case MISCELLANEOUS -> "MISC";
             case WORLD -> "WORLD";
-            case HUD -> "HUD";
+            case OTHER -> "OTHER";
+            case DEBUG -> "DEBUG";
         };
         return switch (category) {
             case COMBAT -> "COMBATE";
             case MOVEMENT -> "MOVIMENTO";
             case RENDER -> "VISUAL";
-            case PLAYER -> "JOGADOR";
+            case EXPLOITS -> "EXPLOITS";
+            case MISCELLANEOUS -> "DIVERSOS";
             case WORLD -> "MUNDO";
-            case HUD -> "HUD";
+            case OTHER -> "OUTROS";
+            case DEBUG -> "DEBUG";
         };
     }
 
