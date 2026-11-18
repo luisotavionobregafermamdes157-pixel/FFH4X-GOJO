@@ -70,7 +70,7 @@ public final class GojoScreen extends Screen {
             if (active) context.fill(panelX + 19, cy - 5, panelX + 140, cy + 17, 0xFF2B2B49);
             context.fill(panelX + 19, cy - 5, panelX + 22, cy + 17, active ? PURPLE : 0xFF414152);
             context.drawText(textRenderer, translatedCategory(category), panelX + 30, cy, active ? 0xFFFFFFFF : 0xFF9696A9, false);
-            cy += 34;
+            cy += 27;
         }
         int optionsY = panelY + panelH - 72;
         context.fill(panelX + 19, optionsY, panelX + 140, optionsY + 22, 0xFF303047);
@@ -296,10 +296,10 @@ public final class GojoScreen extends Screen {
             }
             int catY = panelY + 94;
             for (ModuleCategory category : ModuleCategory.values()) {
-                if (mouseX >= panelX + 15 && mouseX <= panelX + 146 && mouseY >= catY - 7 && mouseY <= catY + 19) {
+                if (mouseX >= panelX + 15 && mouseX <= panelX + 146 && mouseY >= catY - 7 && mouseY <= catY + 17) {
                     selected = category; scroll = 0; cachedQuery = null; refreshFiltered(); return true;
                 }
-                catY += 34;
+                catY += 27;
             }
             int listX = panelX + 164;
             int listW = panelW - 178;
