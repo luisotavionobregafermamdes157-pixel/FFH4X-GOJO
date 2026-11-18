@@ -1,5 +1,5 @@
 package dev.gojo.client.module;
 
 public enum ModuleCategory {
-    COMBAT, MOVEMENT, RENDER, PLAYER, WORLD, HUD
+    COMBAT, EXPLOITS, MISCELLANEOUS, MOVEMENT, RENDER, WORLD, OTHER, DEBUG
 }
