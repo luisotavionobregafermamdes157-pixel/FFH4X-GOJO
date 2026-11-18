@@ -65,7 +65,7 @@ public final class GojoScreen extends Screen {
         context.drawText(textRenderer, languageLabel, panelX + panelW - 61 - languageWidth / 2, panelY + 49, 0xFF9EDBFF, true);
         context.fill(panelX + 14, panelY + 81, panelX + 146, panelY + panelH - 15, PANEL);
         int cy = panelY + 94;
-        for (ModuleCategory category : ModuleCategory.values()) {
+        for (ModuleCategory category : visibleCategories()) {
             boolean active = category == selected;
             if (active) context.fill(panelX + 19, cy - 5, panelX + 140, cy + 17, 0xFF2B2B49);
             context.fill(panelX + 19, cy - 5, panelX + 22, cy + 17, active ? PURPLE : 0xFF414152);
@@ -255,6 +255,16 @@ public final class GojoScreen extends Screen {
             case OTHER -> "OUTROS";
             case DEBUG -> "DEBUG";
         };
+    }
+
+    private static List<ModuleCategory> visibleCategories() {
+        List<ModuleCategory> categories = new ArrayList<>();
+        for (ModuleCategory category : ModuleCategory.values()) {
+            boolean hasImplementedModules = ModuleManager.all().stream()
+                    .anyMatch(module -> module.implemented() && module.category() == category);
+            if (hasImplementedModules) categories.add(category);
+        }
+        return categories;
     }
 
     private void refreshFiltered() {
