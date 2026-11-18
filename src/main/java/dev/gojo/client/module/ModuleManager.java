@@ -78,24 +78,24 @@ public final class ModuleManager {
         add("Nametags", "Enhanced entity labels for permitted/private worlds.", ModuleCategory.RENDER, false);
         add("Block Indicator", "Displays the block under the crosshair.", ModuleCategory.RENDER, true);
         add("Lighting", "Client-side lighting presentation controls.", ModuleCategory.RENDER, false);
-        add("Auto Tool", "Selects the fastest tool in your hotbar for the targeted block.", ModuleCategory.PLAYER, true);
-        add("Auto Respawn", "Automatically respawns after death.", ModuleCategory.PLAYER, true);
-        add("Coordinates", "Displays current XYZ coordinates.", ModuleCategory.PLAYER, true);
-        add("Player Info", "Displays player and dimension information.", ModuleCategory.PLAYER, true);
-        add("Inventory Manager", "Refills the selected hotbar slot from the main inventory when it becomes empty.", ModuleCategory.PLAYER, true);
+        add("Auto Tool", "Selects the fastest tool in your hotbar for the targeted block.", ModuleCategory.MISCELLANEOUS, true);
+        add("Auto Respawn", "Automatically respawns after death.", ModuleCategory.MISCELLANEOUS, true);
+        add("Coordinates", "Displays current XYZ coordinates.", ModuleCategory.MISCELLANEOUS, true);
+        add("Player Info", "Displays player and dimension information.", ModuleCategory.MISCELLANEOUS, true);
+        add("Inventory Manager", "Refills the selected hotbar slot from the main inventory when it becomes empty.", ModuleCategory.MISCELLANEOUS, true);
         add("Block Info", "Displays targeted block state and position.", ModuleCategory.WORLD, true);
         add("Structure Finder", "Visual structure discovery; no server scanning.", ModuleCategory.WORLD, false);
         add("Entity Viewer", "Displays nearby entity counts.", ModuleCategory.WORLD, true);
         add("Environment Info", "Displays biome and dimension context.", ModuleCategory.WORLD, true);
         add("FPS", "Displays current frames per second.", ModuleCategory.OTHER, true);
-        add("Ping", "Displays connection latency when available.", ModuleCategory.HUD, true);
-        add("HUD Coordinates", "Coordinates overlay.", ModuleCategory.HUD, true);
-        add("HUD Speed", "Movement speed overlay.", ModuleCategory.HUD, true);
-        add("Durability", "Displays equipped item durability.", ModuleCategory.HUD, true);
-        add("Clock", "Displays local system time.", ModuleCategory.HUD, true);
-        add("Server Info", "Displays server and connection details.", ModuleCategory.HUD, true);
-        add("Connection Monitor", "Shows whether the client is in singleplayer or multiplayer and displays current ping.", ModuleCategory.HUD, true);
-        add("Server Compatibility", "Disables automated combat and movement modules while connected to a multiplayer server.", ModuleCategory.PLAYER, true);
+        add("Ping", "Displays connection latency when available.", ModuleCategory.OTHER, true);
+        add("HUD Coordinates", "Coordinates overlay.", ModuleCategory.OTHER, true);
+        add("HUD Speed", "Movement speed overlay.", ModuleCategory.OTHER, true);
+        add("Durability", "Displays equipped item durability.", ModuleCategory.OTHER, true);
+        add("Clock", "Displays local system time.", ModuleCategory.OTHER, true);
+        add("Server Info", "Displays server and connection details.", ModuleCategory.OTHER, true);
+        add("Connection Monitor", "Shows whether the client is in singleplayer or multiplayer and displays current ping.", ModuleCategory.OTHER, true);
+        add("Server Compatibility", "Disables automated combat and movement modules while connected to a multiplayer server.", ModuleCategory.MISCELLANEOUS, true);
 
         registerCatalog(ModuleCategory.COMBAT, """
                 AntiBots|Anti-bot entity filtering
