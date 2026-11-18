@@ -53,6 +53,7 @@ public final class ModuleManager {
         add("Target Indicator", "Shows the entity currently under the crosshair.", ModuleCategory.COMBAT, true);
         add("Combat Info", "Displays compact combat context in the HUD.", ModuleCategory.COMBAT, true);
         add("KillAura", "Automatically attacks visible players in a short range.", ModuleCategory.COMBAT, true);
+        add("KillAura 360", "Targets visible players in every direction around you (360-degree targeting).", ModuleCategory.COMBAT, true);
         add("Mob KillAura", "Automatically attacks visible hostile and passive mobs in range.", ModuleCategory.COMBAT, true);
         add("Hitbox", "Expands nearby player and mob hitboxes (client-side targeting).", ModuleCategory.COMBAT, true);
         add("Auto Click", "Repeats the attack input while the left mouse button is held (1-20 CPS).", ModuleCategory.COMBAT, true);
@@ -321,8 +322,9 @@ public final class ModuleManager {
         tickEsp(client, player);
         tickAimbot(client, player);
         tickAutoClick(client);
-        tickKillAura(client, player, "KillAura", true);
-        tickKillAura(client, player, "Mob KillAura", false);
+        tickKillAura(client, player, "KillAura", true, false);
+        tickKillAura(client, player, "KillAura 360", true, true);
+        tickKillAura(client, player, "Mob KillAura", false, false);
         tickHitboxes(client, player);
         tickScaffold(client, player);
     }
@@ -333,7 +335,7 @@ public final class ModuleManager {
         if (compatibility == null || !compatibility.enabled() || client.getCurrentServerEntry() == null) return;
 
         String[] restrictedModules = {
-                "KillAura", "Mob KillAura", "Hitbox", "Aimbot", "Auto Click",
+                "KillAura", "KillAura 360", "Mob KillAura", "Hitbox", "Aimbot", "Auto Click",
                 "Speed", "Fly", "NoFall", "NoSlow", "Step Assist", "Scaffold"
         };
         boolean changed = false;
@@ -599,7 +601,7 @@ public final class ModuleManager {
     }
 
     private static void tickKillAura(MinecraftClient client, ClientPlayerEntity player,
-                                     String moduleName, boolean playersOnly) {
+                                     String moduleName, boolean playersOnly, boolean full360) {
         GojoModule aura = find(moduleName);
         if (aura == null || !aura.enabled() || client.interactionManager == null
                 || client.currentScreen != null) return;
@@ -621,7 +623,7 @@ public final class ModuleManager {
             double distance = player.squaredDistanceTo(entity);
             if (distance >= closest || !player.canSee(entity)) continue;
             Vec3d direction = entity.getEyePos().subtract(player.getEyePos()).normalize();
-            if (look.dotProduct(direction) < minDot) continue;
+            if (!full360 && look.dotProduct(direction) < minDot) continue;
             closest = distance;
             target = entity;
         }
