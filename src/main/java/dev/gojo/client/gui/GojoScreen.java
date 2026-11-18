@@ -10,6 +10,7 @@ import dev.gojo.client.module.ModuleManager;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
@@ -71,6 +72,11 @@ public final class GojoScreen extends Screen {
             context.drawText(textRenderer, translatedCategory(category), panelX + 30, cy, active ? 0xFFFFFFFF : 0xFF9696A9, false);
             cy += 34;
         }
+        int optionsY = panelY + panelH - 72;
+        context.fill(panelX + 19, optionsY, panelX + 140, optionsY + 22, 0xFF303047);
+        String optionsLabel = pt() ? "OPÇÕES DO JOGO" : "GAME OPTIONS";
+        int optionsWidth = textRenderer.getWidth(optionsLabel);
+        context.drawText(textRenderer, optionsLabel, panelX + 79 - optionsWidth / 2, optionsY + 7, 0xFFE0E0F0, true);
         int optimizeY = panelY + panelH - 43;
         context.fill(panelX + 19, optimizeY, panelX + 140, optimizeY + 25, optimized ? 0xFF245E55 : 0xFF303047);
         String optimizeLabel = optimized
@@ -275,6 +281,12 @@ public final class GojoScreen extends Screen {
         double mouseY = click.y();
         int button = click.button();
         if (button == 0) {
+            int optionsY = panelY + panelH - 72;
+            if (mouseX >= panelX + 19 && mouseX <= panelX + 140
+                    && mouseY >= optionsY && mouseY <= optionsY + 22) {
+                if (client != null) client.setScreen(new OptionsScreen(this, client.options));
+                return true;
+            }
             if (mouseX >= panelX + panelW - 104 && mouseX <= panelX + panelW - 18
                     && mouseY >= panelY + 42 && mouseY <= panelY + 65) {
                 ClientLanguage.toggle();
