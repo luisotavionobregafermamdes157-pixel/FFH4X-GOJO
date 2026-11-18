@@ -263,7 +263,7 @@ public final class GojoScreen extends Screen {
         cachedQuery = query;
         List<GojoModule> result = new ArrayList<>();
         for (GojoModule module : ModuleManager.all()) {
-            if (module.category() == selected && (query.isBlank()
+            if (module.implemented() && module.category() == selected && (query.isBlank()
                     || module.name().toLowerCase(Locale.ROOT).contains(query)
                     || module.description().toLowerCase(Locale.ROOT).contains(query)
                     || translatedName(module.name()).toLowerCase(Locale.ROOT).contains(query)
